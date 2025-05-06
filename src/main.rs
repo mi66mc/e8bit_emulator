@@ -1,3 +1,5 @@
+use std::result;
+
 #[derive(Debug)]
 struct vm {
     pc: usize,
@@ -109,7 +111,32 @@ impl vm {
     }
 
     fn add(&mut self, reg: Reg, src: Source) {
-        
+        match src {
+            Source::Reg(src_reg) => {
+                let src_index = self.reg_index(src_reg);
+                let r = self.reg[self.reg_index(reg)].wrapping_add(self.reg[src_index]);
+                self.zf =
+                    r == 0;
+                self.reg[self.reg_index(reg)] = r;
+            }
+            Source::Mem(value) => {
+                let v = self.mem[value as usize];
+                let r = self.reg[self.reg_index(reg)].wrapping_add(v);
+                self.zf =
+                    r == 0;
+                self.reg[self.reg_index(reg)] = r;
+            }
+            Source::Lit(value) => {
+                let v = value;
+                let r = self.reg[self.reg_index(reg)].wrapping_add(v);
+                self.zf =
+                    r == 0;
+                self.reg[self.reg_index(reg)] = r;
+            }
+            _ => {}
+        }
+
+        println!("ADD {:?} {:?}", reg, src);
     }
     
 }
@@ -119,9 +146,12 @@ fn main() {
     let program = vec![
         Instruction::MOV(Reg::A, Source::Lit(5)),
         Instruction::MOV(Reg::B, Source::Lit(10)),
-        Instruction::STORE(Reg::A, 0),
-        Instruction::MOV(Reg::A, Source::Mem(0)),
         Instruction::ADD(Reg::A, Source::Reg(Reg::B)),
+        Instruction::STORE(Reg::A, 0),
+        Instruction::ADD(Reg::A, Source::Mem(0)),
+        Instruction::ADD(Reg::B, Source::Lit(200)),
+        Instruction::STORE(Reg::B, 1),
+        Instruction::MOV(Reg::A, Source::Mem(0)),
         Instruction::PRINT(Reg::A),
     ];
     vm.load_program(program);
