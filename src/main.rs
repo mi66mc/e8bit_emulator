@@ -28,6 +28,7 @@ enum Instruction {
     JMP(usize),
     JZ(usize),
     JNZ(usize),
+    LOOP(usize, Reg),
     PRINT(Reg),
     HALT
 }
@@ -76,6 +77,7 @@ impl vm {
                 Instruction::JMP(addr) => self.jmp(*addr),
                 Instruction::JZ(addr) => self.jz(*addr),
                 Instruction::JNZ(addr) => self.jnz(*addr),
+                Instruction::LOOP(addr, reg) => self.loop_fn(*addr, *reg),
                 Instruction::PRINT(reg) => self.print(*reg),
                 Instruction::HALT => {
                     println!("!-!- HALT !-!");
@@ -256,6 +258,14 @@ impl vm {
         // println!("JNZ {:?}", addr);
     }
 
+    fn loop_fn(&mut self, addr: usize, reg: Reg) {
+        let index = self.reg_index(reg);
+        if self.reg[index] > 0 {
+            self.pc = addr;
+        }
+        // println!("LOOP {:?} {:?}", addr, reg);
+    }
+
     fn print(&mut self, reg: Reg) {
         println!("{}", self.reg[self.reg_index(reg)]);
     }
@@ -271,7 +281,7 @@ fn main() {
         Instruction::SUB(Reg::A, Source::Reg(Reg::B)),  // Subtract B from A
         Instruction::PRINT(Reg::A),                     // Print A
         Instruction::SUB(Reg::C, Source::Lit(1)),       // Decrement loop counter
-        Instruction::JNZ(2),                            // Jump back if C != 0
+        Instruction::LOOP(2, Reg::C),                   // Jump back if C != 0
         Instruction::HALT,                              // Stop the program
     ];
     vm.load_program(program);
