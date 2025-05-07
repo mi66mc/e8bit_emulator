@@ -72,9 +72,9 @@ impl Vm {
                 Instruction::SUB(reg, src) => self.sub(*reg, *src),
                 Instruction::MUL(reg, src) => self.mul(*reg, *src),
                 Instruction::DIV(reg, src) => self.div(*reg, *src),
-                Instruction::JMP(addr) => self.jmp(*addr),
-                Instruction::JZ(addr) => self.jz(*addr),
-                Instruction::JNZ(addr) => self.jnz(*addr),
+                Instruction::JMP(addr) => { self.jmp(*addr); continue; },
+                Instruction::JZ(addr) => { self.jz(*addr); continue; },
+                Instruction::JNZ(addr) => { self.jnz(*addr); continue; },
                 Instruction::LOOP(addr, reg) => { self.loop_fn(*addr, *reg); continue; },
                 Instruction::PRINT(reg) => self.print(*reg),
                 Instruction::HALT => {
@@ -245,6 +245,8 @@ impl Vm {
     fn jz(&mut self, addr: usize) {
         if self.zf {
             self.pc = addr;
+        } else {
+            self.pc += 1;
         }
         // println!("JZ {:?}", addr);
     }
@@ -252,6 +254,8 @@ impl Vm {
     fn jnz(&mut self, addr: usize) {
         if !self.zf {
             self.pc = addr;
+        } else {
+            self.pc += 1;
         }
         // println!("JNZ {:?}", addr);
     }
