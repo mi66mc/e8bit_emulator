@@ -317,13 +317,6 @@ fn parse_program(file_path: Option<&str>) -> Vec<Instruction> {
             .collect()
     } else {
         vec![
-            Instruction::MOV(Reg::A, Source::Lit(60)),      // Initialize A with 60
-            Instruction::MOV(Reg::B, Source::Lit(10)),      // Initialize B with 10
-            Instruction::MOV(Reg::C, Source::Lit(5)),       // Set loop counter to 5
-            Instruction::SUB(Reg::A, Source::Reg(Reg::B)),  // Subtract B from A
-            Instruction::PRINT(Reg::A),                     // Print A
-            Instruction::SUB(Reg::C, Source::Lit(1)),       // Decrement loop counter
-            Instruction::LOOP(2, Reg::C),                   // Jump back if C != 0
             Instruction::HALT,                              // Stop the program
         ]
     }
