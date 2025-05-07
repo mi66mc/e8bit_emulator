@@ -89,6 +89,9 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 - **Register**: A single character (A, B, C, D).
 - **Immediate Value**: A number (e.g., 10, 5).
 - **Memory Address**: A number in square brackets (e.g., `[0]`, `[1]`).
+> Note: Square brackets (`[]`) are used only when specifying memory addresses for instructions other than `STORE`. For example:
+> - `MOV A [0]` loads the value from memory address 0 into register A.
+> - `STORE A 0` stores the value of register A into memory address 0 (no brackets required).
 
 ## Args Types Supported
 
@@ -99,7 +102,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `SUB`       | Register    | Immediate Value, Memory Address or Register |
 | `MUL`       | Register    | Immediate Value, Memory Address or Register |
 | `DIV`       | Register    | Immediate Value, Memory Address or Register |
-| `STORE`     | Register    | Memory Address |
+| `STORE`     | Register    | Memory Address (Immediate Value in this case) |
 | `JMP`       | Immediate Value | -          |
 | `JZ`        | Immediate Value | -          |
 | `JNZ`       | Immediate Value | -          |
