@@ -69,11 +69,11 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `SUB`       | Subtract a value from a register (`SUB A B` or `SUB A 3`).                 |
 | `MUL`       | Multiply a register by a value (`MUL A B` or `MUL A 2`).                  |
 | `DIV`       | Divide a register by a value (`DIV A B` or `DIV A 2`).                    |
-| `STORE`     | Store a register's value into memory (`STORE A 0`).                        |
+| `STORE`     | Store a register's value into memory (`STORE A [0]`).                      |
 | `JMP`       | Jump to a specific instruction (`JMP 10`).                                |
 | `JZ`        | Jump if the zero flag is set (`JZ 10`).                                   |
 | `JNZ`       | Jump if the zero flag is not set (`JNZ 10`).                              |
-| `LOOP`      | jump if register is not zero (`LOOP 10 C`).                  |
+| `LOOP`      | Jump if register is not zero (`LOOP 10 C`).                               |
 | `PRINT`     | Print the value of a register (`PRINT A`).                                |
 | `INPUT`     | Read a value from the user into a register (`INPUT A`).                   |
 | `HALT`      | Stop program execution.                                                   |
@@ -82,21 +82,21 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 
 - **Register**: A single character (A, B, C, D).
 - **Immediate Value**: A number (e.g., 10, 5).
-- **Memory Address**: A number in square brackets (e.g., `[0]`, `[1]`).
-> Note: Square brackets (`[]`) are used only when specifying memory addresses for instructions other than `STORE`. For example:
+- **Memory Address**: A number in square brackets (e.g., `[0]`, `[1]`) or a register in square brackets (e.g., `[A]`, `[B]`).
+> Note: Square brackets (`[]`) are used to specify memory addresses. For example:
 > - `MOV A [0]` loads the value from memory address 0 into register A.
-> - `STORE A 0` stores the value of register A into memory address 0 (no brackets required).
+> - `STORE A [0]` stores the value of register A into memory address 0.
 
 ## Args Types Supported
 
 | Instruction | Arg 1 Type | Arg 2 Type |
 |-------------|------------|------------|
-| `MOV`       | Register    | Immediate Value, Memory Address or Register |
-| `ADD`       | Register    | Immediate Value, Memory Address or Register |
-| `SUB`       | Register    | Immediate Value, Memory Address or Register |
-| `MUL`       | Register    | Immediate Value, Memory Address or Register |
-| `DIV`       | Register    | Immediate Value, Memory Address or Register |
-| `STORE`     | Register    | Memory Address (Immediate Value in this case) |
+| `MOV`       | Register    | Immediate Value, Memory Address, or Register |
+| `ADD`       | Register    | Immediate Value, Memory Address, or Register |
+| `SUB`       | Register    | Immediate Value, Memory Address, or Register |
+| `MUL`       | Register    | Immediate Value, Memory Address, or Register |
+| `DIV`       | Register    | Immediate Value, Memory Address, or Register |
+| `STORE`     | Register    | Memory Address (Immediate Value or Register in brackets) |
 | `JMP`       | Immediate Value | -          |
 | `JZ`        | Immediate Value | -          |
 | `JNZ`       | Immediate Value | -          |

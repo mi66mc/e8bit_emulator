@@ -18,7 +18,7 @@ enum Reg {
 #[derive(Debug, Clone, Copy)]
 enum Instruction {
     MOV(Reg, Source),
-    STORE(Reg, u8),
+    STORE(Reg, MemSrc),
     ADD(Reg, Source),
     SUB(Reg, Source),
     MUL(Reg, Source),
@@ -35,8 +35,14 @@ enum Instruction {
 #[derive(Debug, Clone, Copy)]
 enum Source {
     Reg(Reg),
-    Mem(u8),
+    Mem(MemSrc),
     Lit(u8),
+}
+
+#[derive(Debug, Clone, Copy)]
+enum MemSrc {
+    Reg(Reg),
+    Addr(u8)
 }
 
 impl Vm {
@@ -68,7 +74,7 @@ impl Vm {
             let instruction = &self.program[self.pc];
             match instruction {
                 Instruction::MOV(reg, src) => self.mov(*reg, *src),
-                Instruction::STORE(reg, src) => self.store(*reg, *src),
+                Instruction::STORE(reg, mem_src) => self.store(*reg, *mem_src),
                 Instruction::ADD(reg, src) => self.add(*reg, *src),
                 Instruction::SUB(reg, src) => self.sub(*reg, *src),
                 Instruction::MUL(reg, src) => self.mul(*reg, *src),
@@ -97,10 +103,15 @@ impl Vm {
                     self.reg[src_index] == 0;
             }
             Source::Mem(value) => {
-                let mem_value = self.mem[value as usize];
+                let mem_value = self.mem[
+                    match value {
+                        MemSrc::Reg(src_reg) => self.reg[self.reg_index(src_reg)] as usize,
+                        MemSrc::Addr(addr) => addr as usize,
+                    }
+                ];
                 self.reg[self.reg_index(reg)] = mem_value;
                 self.zf =
-                    value == 0;
+                    mem_value == 0;
             }
             Source::Lit(value) => {
                 self.reg[self.reg_index(reg)] = value;
@@ -111,9 +122,16 @@ impl Vm {
         // println!("MOV {:?} {:?}", reg, src);
     }
 
-    fn store(&mut self, reg: Reg, src: u8) {
-        let index = self.reg_index(reg);
-        self.mem[src as usize] = self.reg[index];
+    fn store(&mut self, reg: Reg, mem_src: MemSrc) {
+        match mem_src {
+            MemSrc::Reg(src_reg) => {
+                let src_index = self.reg_index(src_reg);
+                self.mem[self.reg[src_index] as usize] = self.reg[self.reg_index(reg)];
+            }
+            MemSrc::Addr(addr) => {
+                self.mem[addr as usize] = self.reg[self.reg_index(reg)];
+            }
+        }
 
         // println!("STORE {:?} {:?}", reg, src);
     }
@@ -128,7 +146,12 @@ impl Vm {
                 self.reg[self.reg_index(reg)] = r;
             }
             Source::Mem(value) => {
-                let v = self.mem[value as usize];
+                let v = self.mem[
+                    match value {
+                        MemSrc::Reg(src_reg) => self.reg[self.reg_index(src_reg)] as usize,
+                        MemSrc::Addr(addr) => addr as usize,
+                    }
+                ];
                 let r = self.reg[self.reg_index(reg)].wrapping_add(v);
                 self.zf =
                     r == 0;
@@ -156,7 +179,12 @@ impl Vm {
                 self.reg[self.reg_index(reg)] = r;
             }
             Source::Mem(value) => {
-                let v = self.mem[value as usize];
+                let v = self.mem[
+                    match value {
+                        MemSrc::Reg(src_reg) => self.reg[self.reg_index(src_reg)] as usize,
+                        MemSrc::Addr(addr) => addr as usize,
+                    }
+                ];
                 let r = self.reg[self.reg_index(reg)].wrapping_sub(v);
                 self.zf =
                     r == 0;
@@ -187,10 +215,20 @@ impl Vm {
                 self.reg[self.reg_index(reg)] = r;
             }
             Source::Mem(value) => {
-                if self.mem[value as usize] == 0 {
+                if self.mem[
+                    match value {
+                        MemSrc::Reg(src_reg) => self.reg[self.reg_index(src_reg)] as usize,
+                        MemSrc::Addr(addr) => addr as usize,
+                    }
+                ] == 0 {
                     panic!("Division by zero");
                 }
-                let v = self.mem[value as usize];
+                let v = self.mem[
+                    match value {
+                        MemSrc::Reg(src_reg) => self.reg[self.reg_index(src_reg)] as usize,
+                        MemSrc::Addr(addr) => addr as usize,
+                    }
+                ];
                 let r = self.reg[self.reg_index(reg)].wrapping_div(v);
                 self.zf =
                     r == 0;
@@ -221,7 +259,12 @@ impl Vm {
                 self.reg[self.reg_index(reg)] = r;
             }
             Source::Mem(value) => {
-                let v = self.mem[value as usize];
+                let v = self.mem[
+                    match value {
+                        MemSrc::Reg(src_reg) => self.reg[self.reg_index(src_reg)] as usize,
+                        MemSrc::Addr(addr) => addr as usize,
+                    }
+                ];
                 let r = self.reg[self.reg_index(reg)].wrapping_mul(v);
                 self.zf =
                     r == 0;
@@ -323,7 +366,7 @@ fn parse_program(file_path: Option<&str>) -> Vec<Instruction> {
                             ["SUB", reg, src] => Some(Instruction::SUB(parse_reg(reg), parse_source(src))),
                             ["MUL", reg, src] => Some(Instruction::MUL(parse_reg(reg), parse_source(src))),
                             ["DIV", reg, src] => Some(Instruction::DIV(parse_reg(reg), parse_source(src))),
-                            ["STORE", reg, addr] => Some(Instruction::STORE(parse_reg(reg), addr.parse().unwrap())),
+                            ["STORE", reg, src] => Some(Instruction::STORE(parse_reg(reg), parse_mem_src(src))),
                             ["JMP", addr] => Some(Instruction::JMP(addr.parse().unwrap())),
                             ["JZ", addr] => Some(Instruction::JZ(addr.parse().unwrap())),
                             ["JNZ", addr] => Some(Instruction::JNZ(addr.parse().unwrap())),
@@ -357,10 +400,29 @@ fn parse_source(src: &str) -> Source {
     if let Ok(lit) = src.parse::<u8>() {
         Source::Lit(lit)
     } else if src.starts_with("[") && src.ends_with(']') {
-        let addr = src[1..src.len() - 1].parse::<u8>().expect("Invalid memory address");
-        Source::Mem(addr)
+        let inner = &src[1..src.len() - 1];
+        if let Ok(addr) = inner.parse::<u8>() {
+            Source::Mem(MemSrc::Addr(addr))
+        } else if inner.chars().all(|c| c.is_alphabetic()) {
+            Source::Mem(MemSrc::Reg(parse_reg(inner)))
+        } else {
+            panic!("Invalid memory source: {}", src);
+        }
     } else {
         Source::Reg(parse_reg(src))
+    }
+}
+
+fn parse_mem_src(src: &str) -> MemSrc {
+    if src.starts_with("[") && src.ends_with(']') {
+        if src[1..src.len() - 1].chars().all(|c| c.is_alphabetic()) {
+            let reg = parse_reg(&src[1..src.len() - 1]);
+            return MemSrc::Reg(reg);
+        }
+        let addr = src[1..src.len() - 1].parse::<u8>().expect("Expected a numeric memory address inside brackets");
+        MemSrc::Addr(addr)
+    } else {
+        panic!("Invalid memory source: {}", src);
     }
 }
 
