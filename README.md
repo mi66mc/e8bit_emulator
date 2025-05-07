@@ -26,35 +26,20 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
 The file `example.e8` contains an example program that demonstrates the use of registers, arithmetic operations, memory storage, and loops.
 
 ```plaintext
-// Initialize registers
-MOV A 10;          // Set register A to 10
-MOV B 2;           // Set register B to 2
-MOV C 5;           // Set register C to 5 (loop counter)
+// FACTORIAL SCRIPT
 
-// Perform arithmetic operations
-ADD A B;           // Add B to A (A = A + B)
-SUB A 3;           // Subtract 3 from A (A = A - 3)
-MUL B 4;           // Multiply B by 4 (B = B * 4)
-DIV B 2;           // Divide B by 2 (B = B / 2)
+// registers
+MOV A 1;           // A = 1 (result)
+MOV B 5;           // B = 5 (number to get factorial)
 
-// Store and load from memory
-STORE A 0;         // Store the value of A into memory address 0
-STORE B 1;         // Store the value of B into memory address 1
-MOV D [0];         // Load the value from memory address 0 into register D
-ADD D [1];         // Add the value from memory address 1 to D
+// loop starts here (index 2)
+MUL A B;           // A *= B
+SUB B 1;           // B -= 1
+LOOP 2 B;           // if B != 0 go to index 2 (MUL A B)
 
-// Print values
-PRINT A;           // Print the value of register A
-PRINT B;           // Print the value of register B
-PRINT D;           // Print the value of register D
-
-// Loop example
-PRINT C;           // Print the current value of C
-SUB C 1;           // Decrement C by 1
-LOOP 14 C;         // Jump back to instruction 14, line 24 (may be confusing)
-
-// Halt the program
-HALT;              // Stop execution
+// END
+PRINT A;           // shows result
+HALT;
 ```
 
 ## How to Run
@@ -87,7 +72,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `JMP`       | Jump to a specific instruction (`JMP 10`).                                |
 | `JZ`        | Jump if the zero flag is set (`JZ 10`).                                   |
 | `JNZ`       | Jump if the zero flag is not set (`JNZ 10`).                              |
-| `LOOP`      | Decrement a register and jump if not zero (`LOOP 10 C`).                  |
+| `LOOP`      | jump if register is not zero (`LOOP 10 C`).                  |
 | `PRINT`     | Print the value of a register (`PRINT A`).                                |
 | `HALT`      | Stop program execution.                                                   |
 
@@ -113,7 +98,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `JMP`       | Immediate Value | -          |
 | `JZ`        | Immediate Value | -          |
 | `JNZ`       | Immediate Value | -          |
-| `LOOP`      | Immediate Value | Register    |
+| `LOOP`      | Immediate Value (Instruction Index) | Register    |
 | `PRINT`     | Register    | -          |
 | `HALT`      | -          | -          |
 

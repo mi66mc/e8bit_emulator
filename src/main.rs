@@ -75,7 +75,7 @@ impl Vm {
                 Instruction::JMP(addr) => self.jmp(*addr),
                 Instruction::JZ(addr) => self.jz(*addr),
                 Instruction::JNZ(addr) => self.jnz(*addr),
-                Instruction::LOOP(addr, reg) => self.loop_fn(*addr, *reg),
+                Instruction::LOOP(addr, reg) => { self.loop_fn(*addr, *reg); continue; },
                 Instruction::PRINT(reg) => self.print(*reg),
                 Instruction::HALT => {
                     println!("!-!- HALT !-!");
@@ -259,7 +259,9 @@ impl Vm {
     fn loop_fn(&mut self, addr: usize, reg: Reg) {
         let index = self.reg_index(reg);
         if self.reg[index] > 0 {
-            self.pc = addr - 1;
+            self.pc = addr; // Jump if not zero
+        } else {
+            self.pc += 1; // End loop
         }
         // println!("LOOP {:?} {:?}", addr, reg);
     }
