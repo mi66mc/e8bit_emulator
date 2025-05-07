@@ -4,4 +4,4 @@ version = 4
 
 [[package]]
 name = "e8bit_emulator"
-version = "0.1.0"
+version = "0.1.1"

@@ -1,5 +1,12 @@
 # e8Bit Emulator
 
+<div align="center">
+
+[![Crates.io](https://img.shields.io/crates/v/e8bit_emulator)](https://crates.io/crates/e8bit_emulator)
+[![Project GitHub](https://img.shields.io/badge/e8bit_emulator-github-green)](https://github.com/mi66mc/e8bit_emulator)
+[![mi66mc](https://img.shields.io/badge/mi66mc-github-blue)]([https://](https://github.com/mi66mc))
+</div>
+
 This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It simulates a basic CPU with registers, memory, and a set of instructions for performing arithmetic, memory operations, and control flow.
 
 ## Features
