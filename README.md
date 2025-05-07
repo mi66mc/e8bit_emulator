@@ -18,6 +18,7 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
   - Data Movement: `MOV`, `STORE`
   - Control Flow: `JMP`, `JZ`, `JNZ`, `LOOP`
   - Output: `PRINT`
+  - Input: `INPUT`
   - Program Termination: `HALT`
 - **Zero Flag**: Tracks whether the result of the last operation was zero.
 
@@ -74,6 +75,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `JNZ`       | Jump if the zero flag is not set (`JNZ 10`).                              |
 | `LOOP`      | jump if register is not zero (`LOOP 10 C`).                  |
 | `PRINT`     | Print the value of a register (`PRINT A`).                                |
+| `INPUT`     | Read a value from the user into a register (`INPUT A`).                   |
 | `HALT`      | Stop program execution.                                                   |
 
 ## Args Types
@@ -100,6 +102,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `JNZ`       | Immediate Value | -          |
 | `LOOP`      | Immediate Value (Instruction Index) | Register    |
 | `PRINT`     | Register    | -          |
+| `INPUT`     | Register    | -          |
 | `HALT`      | -          | -          |
 
 ## Future Improvements

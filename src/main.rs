@@ -28,6 +28,7 @@ enum Instruction {
     JNZ(usize),
     LOOP(usize, Reg),
     PRINT(Reg),
+    INPUT(Reg),
     HALT
 }
 
@@ -77,6 +78,7 @@ impl Vm {
                 Instruction::JNZ(addr) => { self.jnz(*addr); continue; },
                 Instruction::LOOP(addr, reg) => { self.loop_fn(*addr, *reg); continue; },
                 Instruction::PRINT(reg) => self.print(*reg),
+                Instruction::INPUT(reg) => self.input(*reg),
                 Instruction::HALT => {
                     println!("!-!- HALT !-!");
                     break;
@@ -273,6 +275,18 @@ impl Vm {
     fn print(&mut self, reg: Reg) {
         println!("{}", self.reg[self.reg_index(reg)]);
     }
+
+    fn input(&mut self, reg: Reg) {
+        use std::io::{ stdout, Write };
+        let mut input = String::new();
+        print!("INPUT {:?}: ", reg);
+        let _ = stdout().flush();
+        std::io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read line");
+        let value: u8 = input.trim().parse().expect("Invalid input");
+        self.reg[self.reg_index(reg)] = value;
+    }
     
 }
 
@@ -314,6 +328,7 @@ fn parse_program(file_path: Option<&str>) -> Vec<Instruction> {
                             ["JZ", addr] => Some(Instruction::JZ(addr.parse().unwrap())),
                             ["JNZ", addr] => Some(Instruction::JNZ(addr.parse().unwrap())),
                             ["LOOP", addr, reg] => Some(Instruction::LOOP(addr.parse().unwrap(), parse_reg(reg))),
+                            ["INPUT", reg] => Some(Instruction::INPUT(parse_reg(reg))),
                             ["HALT"] => Some(Instruction::HALT),
                             _ => panic!("Unknown instruction: {}", segment),
                         }
