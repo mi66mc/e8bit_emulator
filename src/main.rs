@@ -1,7 +1,5 @@
-use std::result;
-
 #[derive(Debug)]
-struct vm {
+struct Vm {
     pc: usize,
     reg: [u8; 4],
     mem: [u8; 256],
@@ -40,9 +38,9 @@ enum Source {
     Lit(u8),
 }
 
-impl vm {
+impl Vm {
     fn new() -> Self {
-        vm {
+        Vm {
             pc: 0,
             reg: [0; 4],
             mem: [0; 256],
@@ -261,7 +259,7 @@ impl vm {
     fn loop_fn(&mut self, addr: usize, reg: Reg) {
         let index = self.reg_index(reg);
         if self.reg[index] > 0 {
-            self.pc = addr;
+            self.pc = addr - 1;
         }
         // println!("LOOP {:?} {:?}", addr, reg);
     }
@@ -272,19 +270,98 @@ impl vm {
     
 }
 
+fn parse_args() -> Vec<String> {
+    std::env::args().collect()
+}
+
+fn parse_program(file_path: Option<&str>) -> Vec<Instruction> {
+    if let Some(path) = file_path {
+        let content = std::fs::read_to_string(path).expect("Failed to read file");
+        content
+            .lines()
+            .filter_map(|line| {
+                let line = line.trim();
+                let line = if let Some(comment_start) = line.find("//") {
+                    &line[..comment_start].trim()
+                } else {
+                    line
+                };
+                if line.is_empty() {
+                    return None;
+                }
+                line.split(';')
+                    .filter_map(|segment| {
+                        let segment = segment.trim();
+                        if segment.is_empty() {
+                            return None;
+                        }
+                        let parts: Vec<&str> = segment.split_whitespace().collect();
+                        match parts.as_slice() {
+                            ["MOV", reg, src] => Some(Instruction::MOV(parse_reg(reg), parse_source(src))),
+                            ["PRINT", reg] => Some(Instruction::PRINT(parse_reg(reg))),
+                            ["ADD", reg, src] => Some(Instruction::ADD(parse_reg(reg), parse_source(src))),
+                            ["SUB", reg, src] => Some(Instruction::SUB(parse_reg(reg), parse_source(src))),
+                            ["MUL", reg, src] => Some(Instruction::MUL(parse_reg(reg), parse_source(src))),
+                            ["DIV", reg, src] => Some(Instruction::DIV(parse_reg(reg), parse_source(src))),
+                            ["STORE", reg, addr] => Some(Instruction::STORE(parse_reg(reg), addr.parse().unwrap())),
+                            ["JMP", addr] => Some(Instruction::JMP(addr.parse().unwrap())),
+                            ["JZ", addr] => Some(Instruction::JZ(addr.parse().unwrap())),
+                            ["JNZ", addr] => Some(Instruction::JNZ(addr.parse().unwrap())),
+                            ["LOOP", addr, reg] => Some(Instruction::LOOP(addr.parse().unwrap(), parse_reg(reg))),
+                            ["HALT"] => Some(Instruction::HALT),
+                            _ => panic!("Unknown instruction: {}", segment),
+                        }
+                    })
+                    .next()
+            })
+            .collect()
+    } else {
+        vec![
+            Instruction::MOV(Reg::A, Source::Lit(60)),      // Initialize A with 60
+            Instruction::MOV(Reg::B, Source::Lit(10)),      // Initialize B with 10
+            Instruction::MOV(Reg::C, Source::Lit(5)),       // Set loop counter to 5
+            Instruction::SUB(Reg::A, Source::Reg(Reg::B)),  // Subtract B from A
+            Instruction::PRINT(Reg::A),                     // Print A
+            Instruction::SUB(Reg::C, Source::Lit(1)),       // Decrement loop counter
+            Instruction::LOOP(2, Reg::C),                   // Jump back if C != 0
+            Instruction::HALT,                              // Stop the program
+        ]
+    }
+}
+
+fn parse_reg(reg: &str) -> Reg {
+    match reg {
+        "A" => Reg::A,
+        "B" => Reg::B,
+        "C" => Reg::C,
+        "D" => Reg::D,
+        _ => panic!("Unknown register: {}", reg),
+    }
+}
+
+fn parse_source(src: &str) -> Source {
+    if let Ok(lit) = src.parse::<u8>() {
+        Source::Lit(lit)
+    } else if src.starts_with("[") && src.ends_with(']') {
+        let addr = src[1..src.len() - 1].parse::<u8>().expect("Invalid memory address");
+        Source::Mem(addr)
+    } else {
+        Source::Reg(parse_reg(src))
+    }
+}
+
 fn main() {
-    let mut vm = vm::new();
-    let program = vec![
-        Instruction::MOV(Reg::A, Source::Lit(60)),      // Initialize A with 60
-        Instruction::MOV(Reg::B, Source::Lit(10)),      // Initialize B with 10
-        Instruction::MOV(Reg::C, Source::Lit(5)),       // Set loop counter to 5
-        Instruction::SUB(Reg::A, Source::Reg(Reg::B)),  // Subtract B from A
-        Instruction::PRINT(Reg::A),                     // Print A
-        Instruction::SUB(Reg::C, Source::Lit(1)),       // Decrement loop counter
-        Instruction::LOOP(2, Reg::C),                   // Jump back if C != 0
-        Instruction::HALT,                              // Stop the program
-    ];
+    let args = parse_args();
+    let file_path = args.get(1).map(|s| s.as_str());
+    let program = parse_program(file_path);
+    let mut vm = Vm::new();
     vm.load_program(program);
     vm.run();
-    println!("Final state: {:?}", vm);
+    println!("---------------------------------------------------\nExecution finished.\n---------------------------------------------------");
+    println!("Registers: {:?}", vm.reg);
+    println!("Memory: {:?}", vm.mem);
+    println!("Program Counter: {:?}", vm.pc);
+    println!("Zero Flag: {:?}", vm.zf);
+    println!("Program: {:?}", vm.program);
+    println!("Program Length: {:?}", vm.program.len());
 }
