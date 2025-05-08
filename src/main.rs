@@ -27,7 +27,8 @@ enum Instruction {
     JZ(usize),
     JNZ(usize),
     LOOP(usize, Reg),
-    PRINT(Reg),
+    PRINT(Reg, bool),
+    PRINTCH(Reg, bool),
     INPUT(Reg),
     HALT
 }
@@ -83,10 +84,11 @@ impl Vm {
                 Instruction::JZ(addr) => { self.jz(*addr); continue; },
                 Instruction::JNZ(addr) => { self.jnz(*addr); continue; },
                 Instruction::LOOP(addr, reg) => { self.loop_fn(*addr, *reg); continue; },
-                Instruction::PRINT(reg) => self.print(*reg),
+                Instruction::PRINT(reg, opt) => self.print(*reg, *opt),
+                Instruction::PRINTCH(reg, opt) => self.printch(*reg, *opt),
                 Instruction::INPUT(reg) => self.input(*reg),
                 Instruction::HALT => {
-                    println!("!-!- HALT !-!");
+                    println!("\n!-!- HALT !-!\n");
                     break;
                 }
             }
@@ -315,21 +317,53 @@ impl Vm {
         // println!("LOOP {:?} {:?}", addr, reg);
     }
 
-    fn print(&mut self, reg: Reg) {
-        println!("{}", self.reg[self.reg_index(reg)]);
+    fn print(&mut self, reg: Reg, opt: bool) {
+        let val = self.reg[self.reg_index(reg)];
+        if opt {
+            println!("{}", val);
+        } else {
+            print!("{}", val);
+            use std::io::{stdout, Write};
+            let _ = stdout().flush();
+        }
+    }
+
+    fn printch(&mut self, reg: Reg, opt: bool) {
+        let val = self.reg[self.reg_index(reg)];
+        if opt {
+            println!("{}", val as char);
+        } else {
+            print!("{}", val as char);
+            use std::io::{stdout, Write};
+            let _ = stdout().flush();
+        }
     }
 
     fn input(&mut self, reg: Reg) {
-        use std::io::{ stdout, Write };
+        use std::io::{stdout, Write};
         let mut input = String::new();
         print!("INPUT {:?}: ", reg);
         let _ = stdout().flush();
         std::io::stdin()
             .read_line(&mut input)
             .expect("Failed to read line");
-        let value: u8 = input.trim().parse().expect("Invalid input");
+    
+        let trimmed = input.trim();
+    
+        let value = if let Ok(num) = trimmed.parse::<u8>() {
+            num
+        } else if trimmed.len() == 1 {
+            trimmed.chars().next().unwrap() as u8
+        } else if trimmed.len() == 0 {
+            self.zf = true;
+            0
+        } else {
+            panic!("Invalid input: expected a number or single character");
+        };
+    
         self.reg[self.reg_index(reg)] = value;
     }
+    
     
 }
 
@@ -342,49 +376,49 @@ fn parse_program(file_path: Option<&str>) -> Vec<Instruction> {
         let content = std::fs::read_to_string(path).expect("Failed to read file");
         content
             .lines()
-            .filter_map(|line| {
+            .flat_map(|line| {
                 let line = line.trim();
                 let line = if let Some(comment_start) = line.find("//") {
                     &line[..comment_start].trim()
                 } else {
                     line
                 };
-                if line.is_empty() {
-                    return None;
-                }
-                line.split(';')
-                    .filter_map(|segment| {
-                        let segment = segment.trim();
-                        if segment.is_empty() {
-                            return None;
-                        }
-                        let parts: Vec<&str> = segment.split_whitespace().collect();
-                        match parts.as_slice() {
-                            ["MOV", reg, src] => Some(Instruction::MOV(parse_reg(reg), parse_source(src))),
-                            ["PRINT", reg] => Some(Instruction::PRINT(parse_reg(reg))),
-                            ["ADD", reg, src] => Some(Instruction::ADD(parse_reg(reg), parse_source(src))),
-                            ["SUB", reg, src] => Some(Instruction::SUB(parse_reg(reg), parse_source(src))),
-                            ["MUL", reg, src] => Some(Instruction::MUL(parse_reg(reg), parse_source(src))),
-                            ["DIV", reg, src] => Some(Instruction::DIV(parse_reg(reg), parse_source(src))),
-                            ["STORE", reg, src] => Some(Instruction::STORE(parse_reg(reg), parse_mem_src(src))),
-                            ["JMP", addr] => Some(Instruction::JMP(addr.parse().unwrap())),
-                            ["JZ", addr] => Some(Instruction::JZ(addr.parse().unwrap())),
-                            ["JNZ", addr] => Some(Instruction::JNZ(addr.parse().unwrap())),
-                            ["LOOP", addr, reg] => Some(Instruction::LOOP(addr.parse().unwrap(), parse_reg(reg))),
-                            ["INPUT", reg] => Some(Instruction::INPUT(parse_reg(reg))),
-                            ["HALT"] => Some(Instruction::HALT),
-                            _ => panic!("Unknown instruction: {}", segment),
-                        }
-                    })
-                    .next()
+
+                line.split(';').filter_map(|segment| {
+                    let segment = segment.trim();
+                    if segment.is_empty() {
+                        return None;
+                    }
+
+                    let parts: Vec<&str> = segment.split_whitespace().collect();
+
+                    match parts.as_slice() {
+                        ["MOV", reg, src] => Some(Instruction::MOV(parse_reg(reg), parse_source(src))),
+                        ["PRINT", reg] => Some(Instruction::PRINT(parse_reg(reg), true)),
+                        ["PRINT", reg, opt] if *opt == "-N" => Some(Instruction::PRINT(parse_reg(reg), false)),
+                        ["PRINTCH", reg] => Some(Instruction::PRINTCH(parse_reg(reg), true)),
+                        ["PRINTCH", reg, opt] if *opt == "-N" => Some(Instruction::PRINTCH(parse_reg(reg), false)),
+                        ["ADD", reg, src] => Some(Instruction::ADD(parse_reg(reg), parse_source(src))),
+                        ["SUB", reg, src] => Some(Instruction::SUB(parse_reg(reg), parse_source(src))),
+                        ["MUL", reg, src] => Some(Instruction::MUL(parse_reg(reg), parse_source(src))),
+                        ["DIV", reg, src] => Some(Instruction::DIV(parse_reg(reg), parse_source(src))),
+                        ["STORE", reg, src] => Some(Instruction::STORE(parse_reg(reg), parse_mem_src(src))),
+                        ["JMP", addr] => Some(Instruction::JMP(addr.parse().unwrap())),
+                        ["JZ", addr] => Some(Instruction::JZ(addr.parse().unwrap())),
+                        ["JNZ", addr] => Some(Instruction::JNZ(addr.parse().unwrap())),
+                        ["LOOP", addr, reg] => Some(Instruction::LOOP(addr.parse().unwrap(), parse_reg(reg))),
+                        ["INPUT", reg] => Some(Instruction::INPUT(parse_reg(reg))),
+                        ["HALT"] => Some(Instruction::HALT),
+                        _ => panic!("Unknown instruction: {}", segment),
+                    }
+                })
             })
             .collect()
     } else {
-        vec![
-            Instruction::HALT,                              // Stop the program
-        ]
+        vec![Instruction::HALT]
     }
 }
+
 
 fn parse_reg(reg: &str) -> Reg {
     match reg {

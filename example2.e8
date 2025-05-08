@@ -1,0 +1,40 @@
+// WELCOME SCRIPT
+
+MOV C 0;
+
+INPUT A;
+
+STORE A [C];
+ADD C 1;
+INPUT A;
+JNZ 2;          // If nothing in the input continue, else go back
+
+// Welcome message
+
+MOV D 72;       // H
+PRINTCH D -N;
+MOV D 101;      // e
+PRINTCH D -N;
+MOV D 108;      // l
+PRINTCH D -N;
+PRINTCH D -N;
+MOV D 111;      // o
+PRINTCH D -N;
+MOV D 44;       // ,
+PRINTCH D -N;
+MOV D 32;       //  
+PRINTCH D -N;
+
+// Hello, 
+
+MOV D 0;
+MOV A [D];
+PRINTCH A -N;   // No line break
+ADD D 1;
+MOV B C;
+SUB B D;
+JNZ 20;
+
+// Hello, (name)
+
+HALT

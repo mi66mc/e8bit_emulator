@@ -16,15 +16,16 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
 - **Instruction Set**:
   - Arithmetic: `ADD`, `SUB`, `MUL`, `DIV`
   - Data Movement: `MOV`, `STORE`
+  - Memory Access: Supports `[0]`, `[A]`, `[B]`, etc.
   - Control Flow: `JMP`, `JZ`, `JNZ`, `LOOP`
-  - Output: `PRINT`
-  - Input: `INPUT`
+  - Input/Output: `INPUT`, `PRINT`, `PRINTCH`
   - Program Termination: `HALT`
 - **Zero Flag**: Tracks whether the result of the last operation was zero.
+- **Custom Parsing**: Accepts comments (`//`) and instruction separation via `;` or by lines.
 
 ## Example Program
 
-The file `example.e8` contains an example program that demonstrates the use of registers, arithmetic operations, memory storage, and loops.
+The files `example.e8` and `example.e8` contains examplex of programs that demonstrates the use of registers, arithmetic operations, memory storage, and loops.
 
 ```plaintext
 // FACTORIAL SCRIPT
@@ -41,6 +42,49 @@ LOOP 2 B;           // if B != 0 go to index 2 (MUL A B)
 // END
 PRINT A;           // shows result
 HALT;
+```
+
+```plaintext
+// WELCOME SCRIPT
+
+MOV C 0;
+
+INPUT A;
+
+STORE A [C];
+ADD C 1;
+INPUT A;
+JNZ 2;          // If nothing in the input continue, else go back
+
+// Welcome message
+
+MOV D 72;       // H
+PRINTCH D -N;
+MOV D 101;      // e
+PRINTCH D -N;
+MOV D 108;      // l
+PRINTCH D -N;
+PRINTCH D -N;
+MOV D 111;      // o
+PRINTCH D -N;
+MOV D 44;       // ,
+PRINTCH D -N;
+MOV D 32;       //  
+PRINTCH D -N;
+
+// Hello, 
+
+MOV D 0;
+MOV A [D];
+PRINTCH A -N;   // No line break
+ADD D 1;
+MOV B C;
+SUB B D;
+JNZ 20;
+
+// Hello, (name)
+
+HALT
 ```
 
 ## How to Run
@@ -62,48 +106,58 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 
 ### Instruction Set
 
-| Instruction | Description                                                                 |
-|-------------|-----------------------------------------------------------------------------|
-| `MOV`       | Move a value into a register (`MOV A 10` or `MOV A [0]`).                  |
-| `ADD`       | Add a value to a register (`ADD A B` or `ADD A 5`).                        |
-| `SUB`       | Subtract a value from a register (`SUB A B` or `SUB A 3`).                 |
-| `MUL`       | Multiply a register by a value (`MUL A B` or `MUL A 2`).                  |
-| `DIV`       | Divide a register by a value (`DIV A B` or `DIV A 2`).                    |
-| `STORE`     | Store a register's value into memory (`STORE A [0]`).                      |
-| `JMP`       | Jump to a specific instruction (`JMP 10`).                                |
-| `JZ`        | Jump if the zero flag is set (`JZ 10`).                                   |
-| `JNZ`       | Jump if the zero flag is not set (`JNZ 10`).                              |
-| `LOOP`      | Jump if register is not zero (`LOOP 10 C`).                               |
-| `PRINT`     | Print the value of a register (`PRINT A`).                                |
-| `INPUT`     | Read a value from the user into a register (`INPUT A`).                   |
-| `HALT`      | Stop program execution.                                                   |
+| Instruction    | Description                                 |
+| -------------- | ------------------------------------------- |
+| `MOV A 10`     | Move value 10 into register A               |
+| `MOV A [0]`    | Move value from memory address 0 into A     |
+| `MOV A [B]`    | Move value from memory at index stored in B |
+| `ADD A B`      | A = A + B                                   |
+| `SUB A 1`      | A = A - 1                                   |
+| `MUL A 2`      | A = A \* 2                                  |
+| `DIV A 2`      | A = A / 2                                   |
+| `STORE A [0]`  | Store A into memory\[0]                     |
+| `STORE A [B]`  | Store A into memory at index in B           |
+| `INPUT A`      | Read input (u8 or char) into register A     |
+| `JMP 10`       | Jump to instruction index 10                |
+| `JZ 5`         | Jump to index 5 if last result was 0        |
+| `JNZ 8`        | Jump if last result was not zero            |
+| `LOOP 3 C`     | Jump to index 3 while C != 0                |
+| `PRINT A`      | Print value of A with newline               |
+| `PRINT A -N`   | Print value of A without newline            |
+| `PRINTCH A`    | Print character represented by value in A   |
+| `PRINTCH A -N` | Print character without newline             |
+| `HALT`         | Stops program execution                     |
 
 ## Args Types
 
-- **Register**: A single character (A, B, C, D).
-- **Immediate Value**: A number (e.g., 10, 5).
-- **Memory Address**: A number in square brackets (e.g., `[0]`, `[1]`) or a register in square brackets (e.g., `[A]`, `[B]`).
+| Type            | Example   | Description                             |
+| --------------- | --------- | --------------------------------------- |
+| Register        | `A`, `B`  | One of the four registers               |
+| Immediate Value | `42`, `7` | A literal number between 0–255          |
+| Memory Address  | `[0]`     | Direct access to memory index 0         |
+| Memory via Reg  | `[A]`     | Access memory using value in register A |
 > Note: Square brackets (`[]`) are used to specify memory addresses. For example:
 > - `MOV A [0]` loads the value from memory address 0 into register A.
 > - `STORE A [0]` stores the value of register A into memory address 0.
 
 ## Args Types Supported
 
-| Instruction | Arg 1 Type | Arg 2 Type |
-|-------------|------------|------------|
-| `MOV`       | Register    | Immediate Value, Memory Address, or Register |
-| `ADD`       | Register    | Immediate Value, Memory Address, or Register |
-| `SUB`       | Register    | Immediate Value, Memory Address, or Register |
-| `MUL`       | Register    | Immediate Value, Memory Address, or Register |
-| `DIV`       | Register    | Immediate Value, Memory Address, or Register |
-| `STORE`     | Register    | Memory Address (Immediate Value or Register in brackets) |
-| `JMP`       | Immediate Value | -          |
-| `JZ`        | Immediate Value | -          |
-| `JNZ`       | Immediate Value | -          |
-| `LOOP`      | Immediate Value (Instruction Index) | Register    |
-| `PRINT`     | Register    | -          |
-| `INPUT`     | Register    | -          |
-| `HALT`      | -          | -          |
+| Instruction | Arg 1 Type                          | Arg 2 Type                                                        |
+| ----------- | ----------------------------------- | ----------------------------------------------------------------- |
+| `MOV`       | Register                            | Immediate Value, Register, or Memory Address (`[0]`, `[A]`, etc.) |
+| `ADD`       | Register                            | Immediate Value, Register, or Memory Address                      |
+| `SUB`       | Register                            | Immediate Value, Register, or Memory Address                      |
+| `MUL`       | Register                            | Immediate Value, Register, or Memory Address                      |
+| `DIV`       | Register                            | Immediate Value, Register, or Memory Address                      |
+| `STORE`     | Register                            | Memory Address (`[0]`, `[B]`, etc.)                               |
+| `JMP`       | Immediate Value                     | -                                                                 |
+| `JZ`        | Immediate Value                     | -                                                                 |
+| `JNZ`       | Immediate Value                     | -                                                                 |
+| `LOOP`      | Immediate Value (Instruction Index) | Register                                                          |
+| `PRINT`     | Register                            | *Optional*: `-N` to suppress newline                              |
+| `PRINTCH`   | Register                            | *Optional*: `-N` to suppress newline                              |
+| `INPUT`     | Register                            | -                                                                 |
+| `HALT`      | -                                   | -                                                                 |
 
 ## Future Improvements
 
