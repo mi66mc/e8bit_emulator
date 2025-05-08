@@ -436,6 +436,7 @@ fn parse_source(src: &str) -> Source {
     } else if src.starts_with("'") && src.ends_with("'") && src.len() == 3 {
         let char_value = src.chars().nth(1).unwrap() as u8;
         Source::Lit(char_value)
+        // chars
     } else if src.starts_with("[") && src.ends_with(']') {
         let inner = &src[1..src.len() - 1];
         if let Ok(addr) = inner.parse::<u8>() {
