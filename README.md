@@ -22,10 +22,11 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
   - Program Termination: `HALT`
 - **Zero Flag**: Tracks whether the result of the last operation was zero.
 - **Custom Parsing**: Accepts comments (`//`) and instruction separation via `;` or by lines.
+- **Character Literals**: Supports character literals in instructions, e.g., `MOV A 'p'`. Characters are internally treated as their ASCII numeric values and must fit within 8 bits (0–255), just like any other number.
 
 ## Example Program
 
-The files `example.e8` and `example.e8` contains examplex of programs that demonstrates the use of registers, arithmetic operations, memory storage, and loops.
+The files `example.e8` and `example.e8` contain examples of programs that demonstrate the use of registers, arithmetic operations, memory storage, and loops.
 
 ```plaintext
 // FACTORIAL SCRIPT
@@ -58,16 +59,16 @@ JNZ 2;          // If nothing in the input continue, else go back
 
 // Welcome message
 
-MOV D 72;       // H
+MOV D 'H';       // H
 PRINTCH D -N;
-MOV D 101;      // e
+MOV D 'e';      // e
 PRINTCH D -N;
-MOV D 108;      // l
+MOV D 'l';      // l
 PRINTCH D -N;
 PRINTCH D -N;
 MOV D 111;      // o
 PRINTCH D -N;
-MOV D 44;       // ,
+MOV D ',';       // ,
 PRINTCH D -N;
 MOV D 32;       //  
 PRINTCH D -N;
@@ -109,6 +110,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | Instruction    | Description                                 |
 | -------------- | ------------------------------------------- |
 | `MOV A 10`     | Move value 10 into register A               |
+| `MOV A 'p'`    | Move character literal 'p' into register A (treated as its ASCII value)  |
 | `MOV A [0]`    | Move value from memory address 0 into A     |
 | `MOV A [B]`    | Move value from memory at index stored in B |
 | `ADD A B`      | A = A + B                                   |
@@ -130,12 +132,12 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 
 ## Args Types
 
-| Type            | Example   | Description                             |
-| --------------- | --------- | --------------------------------------- |
-| Register        | `A`, `B`  | One of the four registers               |
-| Immediate Value | `42`, `7` | A literal number between 0–255          |
-| Memory Address  | `[0]`     | Direct access to memory index 0         |
-| Memory via Reg  | `[A]`     | Access memory using value in register A |
+| Type            | Example     | Description                             |
+| --------------- | ----------- | --------------------------------------- |
+| Register        | `A`, `B`    | One of the four registers               |
+| Immediate Value | `42`, `'p'` | A literal number or character between 0–255          |
+| Memory Address  | `[0]`       | Direct access to memory index 0         |
+| Memory via Reg  | `[A]`       | Access memory using value in register A |
 > Note: Square brackets (`[]`) are used to specify memory addresses. For example:
 > - `MOV A [0]` loads the value from memory address 0 into register A.
 > - `STORE A [0]` stores the value of register A into memory address 0.

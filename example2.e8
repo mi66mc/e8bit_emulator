@@ -11,16 +11,16 @@ JNZ 2;          // If nothing in the input continue, else go back
 
 // Welcome message
 
-MOV D 72;       // H
+MOV D 'H';       // H
 PRINTCH D -N;
-MOV D 101;      // e
+MOV D 'e';      // e
 PRINTCH D -N;
-MOV D 108;      // l
+MOV D 'l';      // l
 PRINTCH D -N;
 PRINTCH D -N;
 MOV D 111;      // o
 PRINTCH D -N;
-MOV D 44;       // ,
+MOV D ',';       // ,
 PRINTCH D -N;
 MOV D 32;       //  
 PRINTCH D -N;
