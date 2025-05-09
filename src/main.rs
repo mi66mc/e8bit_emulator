@@ -22,6 +22,7 @@ enum Instruction {
     ADD(Reg, Source),
     SUB(Reg, Source),
     MUL(Reg, Source),
+    MULH(Reg, Reg, Reg),
     DIV(Reg, Source),
     JMP(usize),
     JZ(usize),
@@ -79,6 +80,7 @@ impl Vm {
                 Instruction::ADD(reg, src) => self.add(*reg, *src),
                 Instruction::SUB(reg, src) => self.sub(*reg, *src),
                 Instruction::MUL(reg, src) => self.mul(*reg, *src),
+                Instruction::MULH(dest, src1, src2) => self.mulh(*dest, *src1, *src2),
                 Instruction::DIV(reg, src) => self.div(*reg, *src),
                 Instruction::JMP(addr) => { self.jmp(*addr); continue; },
                 Instruction::JZ(addr) => { self.jz(*addr); continue; },
@@ -284,6 +286,14 @@ impl Vm {
         // println!("MUL {:?} {:?}", reg, src);
     }
 
+    fn mulh(&mut self, dest: Reg, src1: Reg, src2: Reg) {
+        let src1_val = self.reg[self.reg_index(src1)] as u16;
+        let src2_val = self.reg[self.reg_index(src2)] as u16;
+        let product = src1_val * src2_val;
+        self.reg[self.reg_index(dest)] = (product >> 8) as u8; // high byte
+        self.zf = (product >> 8) == 0; // set zero flag if high byte is zero
+    }
+
     fn jmp(&mut self, addr: usize) {
         self.pc = addr;
         // println!("JMP {:?}", addr);
@@ -401,6 +411,7 @@ fn parse_program(file_path: Option<&str>) -> Vec<Instruction> {
                         ["ADD", reg, src] => Some(Instruction::ADD(parse_reg(reg), parse_source(src))),
                         ["SUB", reg, src] => Some(Instruction::SUB(parse_reg(reg), parse_source(src))),
                         ["MUL", reg, src] => Some(Instruction::MUL(parse_reg(reg), parse_source(src))),
+                        ["MULH", dest, src1, src2] => Some(Instruction::MULH(parse_reg(dest), parse_reg(src1), parse_reg(src2))),
                         ["DIV", reg, src] => Some(Instruction::DIV(parse_reg(reg), parse_source(src))),
                         ["STORE", reg, src] => Some(Instruction::STORE(parse_reg(reg), parse_mem_src(src))),
                         ["JMP", addr] => Some(Instruction::JMP(addr.parse().unwrap())),

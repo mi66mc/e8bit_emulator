@@ -14,7 +14,7 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
 - **Registers**: Four general-purpose 8-bit registers (A, B, C, D).
 - **Memory**: 256 bytes of memory.
 - **Instruction Set**:
-  - Arithmetic: `ADD`, `SUB`, `MUL`, `DIV`
+  - Arithmetic: `ADD`, `SUB`, `MUL`, `DIV`, `MULH`
   - Data Movement: `MOV`, `STORE`
   - Memory Access: Supports `[0]`, `[A]`, `[B]`, etc.
   - Control Flow: `JMP`, `JZ`, `JNZ`, `LOOP`
@@ -26,7 +26,7 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
 
 ## Example Program
 
-The files `example.e8` and `example.e8` contain examples of programs that demonstrate the use of registers, arithmetic operations, memory storage, and loops.
+The files `example.e8`, `example2.e8`, and `example3.e8` contain examples of programs that demonstrate the use of registers, arithmetic operations, memory storage, and loops.
 
 ```plaintext
 // FACTORIAL SCRIPT
@@ -88,6 +88,37 @@ JNZ 20;
 HALT
 ```
 
+```plaintext
+// "16" bits factorial
+
+MOV A 0        // A = 0 (high byte)
+MOV B 1        // B = 1 (low byte)
+MOV C 6        // C = 6 (or 2, 5, etc.)
+MOV D B        // D = B
+MUL D C        // D = B * C (low 8 bits)
+STORE D [0]    // Store low byte
+MULH D B C     // D = B * C (high 8 bits)
+STORE D [1]    // Store high byte
+MOV D A        // D = A
+MUL D C        // D = A * C (low 8 bits)
+ADD D [1]      // D = (A * C) + high byte of B * C
+MOV A D        // A = new high byte
+MOV B [0]      // B = new low byte
+SUB C 1        // C--
+LOOP 3 C       // Loop to instruction 3 if C != 0
+
+
+// if 6 (just examples to know how to calculate)
+PRINT A        // 2
+PRINT B        // 208
+// 256 * 2 = 512
+// 512 + 208 = 720
+// 6! = 720
+
+
+HALT
+```
+
 ## How to Run
 
 1. **Install Rust**: Ensure you have Rust installed. You can download it from [rust-lang.org](https://www.rust-lang.org/).
@@ -116,7 +147,8 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `ADD A B`      | A = A + B                                   |
 | `SUB A 1`      | A = A - 1                                   |
 | `MUL A 2`      | A = A \* 2                                  |
-| `DIV A 2`      | A = A / 2                                   |
+| `DIV A 2`      | A = A / 2                                  |
+| `MULH A B C`   | A = high byte of (B * C)                    |
 | `STORE A [0]`  | Store A into memory\[0]                     |
 | `STORE A [B]`  | Store A into memory at index in B           |
 | `INPUT A`      | Read input (u8 or char) into register A     |
@@ -144,22 +176,23 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 
 ## Args Types Supported
 
-| Instruction | Arg 1 Type                          | Arg 2 Type                                                        |
-| ----------- | ----------------------------------- | ----------------------------------------------------------------- |
-| `MOV`       | Register                            | Immediate Value, Register, or Memory Address (`[0]`, `[A]`, etc.) |
-| `ADD`       | Register                            | Immediate Value, Register, or Memory Address                      |
-| `SUB`       | Register                            | Immediate Value, Register, or Memory Address                      |
-| `MUL`       | Register                            | Immediate Value, Register, or Memory Address                      |
-| `DIV`       | Register                            | Immediate Value, Register, or Memory Address                      |
-| `STORE`     | Register                            | Memory Address (`[0]`, `[B]`, etc.)                               |
-| `JMP`       | Immediate Value                     | -                                                                 |
-| `JZ`        | Immediate Value                     | -                                                                 |
-| `JNZ`       | Immediate Value                     | -                                                                 |
-| `LOOP`      | Immediate Value (Instruction Index) | Register                                                          |
-| `PRINT`     | Register                            | *Optional*: `-N` to suppress newline                              |
-| `PRINTCH`   | Register                            | *Optional*: `-N` to suppress newline                              |
-| `INPUT`     | Register                            | -                                                                 |
-| `HALT`      | -                                   | -                                                                 |
+| Instruction | Arg 1 Type                          | Arg 2 Type                                                        | Arg 3 Type         |
+| ----------- | ----------------------------------- | ----------------------------------------------------------------- | ------------------ |
+| `MOV`       | Register                            | Immediate Value, Register, or Memory Address (`[0]`, `[A]`, etc.) | -                  |
+| `ADD`       | Register                            | Immediate Value, Register, or Memory Address                      | -                  |
+| `SUB`       | Register                            | Immediate Value, Register, or Memory Address                      | -                  |
+| `MUL`       | Register                            | Immediate Value, Register, or Memory Address                      | -                  |
+| `DIV`       | Register                            | Immediate Value, Register, or Memory Address                      | -                  |
+| `MULH`      | Register                            | Register                                                          | Register           |
+| `STORE`     | Register                            | Memory Address (`[0]`, `[B]`, etc.)                               | -                  |
+| `JMP`       | Immediate Value                     | -                                                                 | -                  |
+| `JZ`        | Immediate Value                     | -                                                                 | -                  |
+| `JNZ`       | Immediate Value                     | -                                                                 | -                  |
+| `LOOP`      | Immediate Value (Instruction Index) | Register                                                          | -                  |
+| `PRINT`     | Register                            | *Optional*: `-N` to suppress newline                              | -                  |
+| `PRINTCH`   | Register                            | *Optional*: `-N` to suppress newline                              | -                  |
+| `INPUT`     | Register                            | -                                                                 | -                  |
+| `HALT`      | -                                   | -                                                                 | -                  |
 
 ## Future Improvements
 
