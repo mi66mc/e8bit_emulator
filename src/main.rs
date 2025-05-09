@@ -4,7 +4,7 @@ use std::io::{stdout, Write};
 #[derive(Debug)]
 struct Vm {
     pc: u16,
-    reg: [u8; 4],
+    reg: [u8; 5],
     mem: [u8; 256],
     program: Vec<Instruction>,
     zf: bool,
@@ -16,7 +16,8 @@ enum Reg {
     A,
     B,
     C,
-    D
+    D,
+    E
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -36,6 +37,7 @@ enum Instruction {
     PRINTCH(Reg, bool),
     INPUT(Reg),
     DRAW(Source, Source, Source),
+    SLP(usize),
     CLS,
     RENDER,
     HALT
@@ -58,7 +60,7 @@ impl Vm {
     fn new() -> Self {
         Vm {
             pc: 0,
-            reg: [0; 4],
+            reg: [0; 5],
             mem: [0; 256],
             program: Vec::new(),
             zf: false,
@@ -76,6 +78,7 @@ impl Vm {
             Reg::B => 1,
             Reg::C => 2,
             Reg::D => 3,
+            Reg::E => 4,
         }
     }
 
@@ -98,6 +101,7 @@ impl Vm {
                 Instruction::PRINTCH(reg, opt) => self.printch(*reg, *opt),
                 Instruction::INPUT(reg) => self.input(*reg),
                 Instruction::DRAW(x, y, src) => self.draw(*x, *y, *src),
+                Instruction::SLP(dur) => { self.sleep(*dur); },
                 Instruction::CLS => self.cls(),
                 Instruction::RENDER => self.render_screen(),
                 Instruction::HALT => {
@@ -434,6 +438,10 @@ impl Vm {
         }
         println!("{}", format!("+{}+", "-".repeat(80)));
     }
+
+    fn sleep(&self, duration: usize) {
+        std::thread::sleep(Duration::from_millis(duration as u64));
+    }
     
 }
 
@@ -460,6 +468,8 @@ fn parse_instruction(parts: &[&str]) -> Option<Instruction> {
         ["LOOP", addr, reg] => Some(Instruction::LOOP(addr.parse().unwrap(), parse_reg(reg))),
         ["INPUT", reg] => Some(Instruction::INPUT(parse_reg(reg))),
         ["DRAW", x, y, src] => Some(Instruction::DRAW(parse_source(x), parse_source(y), parse_source(src))),
+        ["SLEEP", duration] => Some(Instruction::SLP(duration.parse().unwrap())),
+        ["SLEEP", duration, "-N"] => Some(Instruction::SLP(duration.parse().unwrap())),
         ["RENDER"] => Some(Instruction::RENDER),
         ["CLS"] => Some(Instruction::CLS),
         ["HALT"] => Some(Instruction::HALT),
@@ -548,6 +558,7 @@ fn parse_reg(reg: &str) -> Reg {
         "B" => Reg::B,
         "C" => Reg::C,
         "D" => Reg::D,
+        "E" => Reg::E,
         _ => panic!("Unknown register: {}", reg),
     }
 }

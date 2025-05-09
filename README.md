@@ -11,7 +11,7 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
 
 ## Features
 
-- **Registers**: Four general-purpose 8-bit registers (A, B, C, D).
+- **Registers**: Five general-purpose 8-bit registers (A, B, C, D, E).
 - **Memory**: 256 bytes of memory.
 - **Instruction Set**:
   - Arithmetic: `ADD`, `SUB`, `MUL`, `DIV`, `MULH`
@@ -21,6 +21,7 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
   - Input/Output: `INPUT`, `PRINT`, `PRINTCH`
   - Program Termination: `HALT`
   - Screen Operations: `DRAW`, `CLS`, `RENDER`
+  - Sleep: `SLP`
 - **Zero Flag**: Tracks whether the result of the last operation was zero.
 - **Custom Parsing**: Accepts comments (`//`) and instruction separation via `;` or by lines.
 - **Character Literals**: Supports character literals in instructions, e.g., `MOV A 'p'`. Characters are internally treated as their ASCII numeric values and must fit within 8 bits (0–255), just like any other number.
@@ -30,7 +31,7 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
 
 ## Example Program
 
-The files [`example.e8`](example.e8), [`example2.e8`](example2.e8), [`example3.e8`](example3.e8), [`example4.e8`](example4.e8) and [`example5.e8`](example5.e8) contain examples of programs that demonstrate the use of registers, arithmetic operations, memory storage, and loops.
+The files [`example.e8`](example.e8), [`example2.e8`](example2.e8), [`example3.e8`](example3.e8), [`example4.e8`](example4.e8), and [`example5.e8`](example5.e8) contain examples of programs that demonstrate the use of registers, arithmetic operations, memory storage, and loops.
 
 ```plaintext
 // FACTORIAL SCRIPT
@@ -193,13 +194,14 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `DRAW X Y C`   | Draw character `C` at screen position `(X, Y)` |
 | `CLS`          | Clear the screen                           |
 | `RENDER`       | Render the screen to the console screen is `80` by `25`   |
+| `SLP 1000`      | Pause execution for 1 second        |
 | `HALT`         | Stops program execution                     |
 
 ## Args Types
 
 | Type            | Example     | Description                             |
 | --------------- | ----------- | --------------------------------------- |
-| Register        | `A`, `B`    | One of the four registers               |
+| Register        | `A`, `B`, `C`, `D`, `E` | One of the five registers               |
 | Immediate Value | `42`, `'p'` | A literal number or character between 0–255          |
 | Memory Address  | `[0]`       | Direct access to memory index 0         |
 | Memory via Reg  | `[A]`       | Access memory using value in register A |
@@ -228,6 +230,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `DRAW`      | Immediate Value, Register, or Memory Address | Immediate Value, Register, or Memory Address | Immediate Value, Register, or Memory Address            |
 | `CLS`       | -                                   | -                                                                 | -                  |
 | `RENDER`    | -                                   | -                                                                 | -                  |
+| `SLP`       | Milliseconds                     | -                                                                 | -                  |
 | `HALT`      | -                                   | -                                                                 | -                  |
 
 ## Future Improvements
