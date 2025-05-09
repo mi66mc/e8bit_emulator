@@ -1,6 +1,6 @@
 #[derive(Debug)]
 struct Vm {
-    pc: usize,
+    pc: u16,
     reg: [u8; 4],
     mem: [u8; 256],
     program: Vec<Instruction>,
@@ -72,8 +72,8 @@ impl Vm {
     }
 
     fn run(&mut self) {
-        while self.pc < self.program.len() {
-            let instruction = &self.program[self.pc];
+        while self.pc < self.program.len() as u16 {
+            let instruction = &self.program[self.pc as usize];
             match instruction {
                 Instruction::MOV(reg, src) => self.mov(*reg, *src),
                 Instruction::STORE(reg, mem_src) => self.store(*reg, *mem_src),
@@ -295,13 +295,13 @@ impl Vm {
     }
 
     fn jmp(&mut self, addr: usize) {
-        self.pc = addr;
+        self.pc = addr as u16;
         // println!("JMP {:?}", addr);
     }
 
     fn jz(&mut self, addr: usize) {
         if self.zf {
-            self.pc = addr;
+            self.pc = addr as u16;
         } else {
             self.pc += 1;
         }
@@ -310,7 +310,7 @@ impl Vm {
 
     fn jnz(&mut self, addr: usize) {
         if !self.zf {
-            self.pc = addr;
+            self.pc = addr as u16;
         } else {
             self.pc += 1;
         }
@@ -320,7 +320,7 @@ impl Vm {
     fn loop_fn(&mut self, addr: usize, reg: Reg) {
         let index = self.reg_index(reg);
         if self.reg[index] > 0 {
-            self.pc = addr; // Jump if not zero
+            self.pc = addr as u16; // Jump if not zero
         } else {
             self.pc += 1; // End loop
         }
@@ -381,6 +381,29 @@ fn parse_args() -> Vec<String> {
     std::env::args().collect()
 }
 
+fn parse_instruction(parts: &[&str]) -> Option<Instruction> {
+    match parts {
+        ["MOV", reg, src] => Some(Instruction::MOV(parse_reg(reg), parse_source(src))),
+        ["PRINT", reg] => Some(Instruction::PRINT(parse_reg(reg), true)),
+        ["PRINT", reg, opt] if *opt == "-N" => Some(Instruction::PRINT(parse_reg(reg), false)),
+        ["PRINTCH", reg] => Some(Instruction::PRINTCH(parse_reg(reg), true)),
+        ["PRINTCH", reg, opt] if *opt == "-N" => Some(Instruction::PRINTCH(parse_reg(reg), false)),
+        ["ADD", reg, src] => Some(Instruction::ADD(parse_reg(reg), parse_source(src))),
+        ["SUB", reg, src] => Some(Instruction::SUB(parse_reg(reg), parse_source(src))),
+        ["MUL", reg, src] => Some(Instruction::MUL(parse_reg(reg), parse_source(src))),
+        ["MULH", dest, src1, src2] => Some(Instruction::MULH(parse_reg(dest), parse_reg(src1), parse_reg(src2))),
+        ["DIV", reg, src] => Some(Instruction::DIV(parse_reg(reg), parse_source(src))),
+        ["STORE", reg, src] => Some(Instruction::STORE(parse_reg(reg), parse_mem_src(src))),
+        ["JMP", addr] => Some(Instruction::JMP(addr.parse().unwrap())),
+        ["JZ", addr] => Some(Instruction::JZ(addr.parse().unwrap())),
+        ["JNZ", addr] => Some(Instruction::JNZ(addr.parse().unwrap())),
+        ["LOOP", addr, reg] => Some(Instruction::LOOP(addr.parse().unwrap(), parse_reg(reg))),
+        ["INPUT", reg] => Some(Instruction::INPUT(parse_reg(reg))),
+        ["HALT"] => Some(Instruction::HALT),
+        _ => None, // Return None for unknown instructions
+    }
+}
+
 fn parse_program(file_path: Option<&str>) -> Vec<Instruction> {
     if let Some(path) = file_path {
         let content = std::fs::read_to_string(path).expect("Failed to read file");
@@ -401,32 +424,50 @@ fn parse_program(file_path: Option<&str>) -> Vec<Instruction> {
                     }
 
                     let parts: Vec<&str> = segment.split_whitespace().collect();
-
-                    match parts.as_slice() {
-                        ["MOV", reg, src] => Some(Instruction::MOV(parse_reg(reg), parse_source(src))),
-                        ["PRINT", reg] => Some(Instruction::PRINT(parse_reg(reg), true)),
-                        ["PRINT", reg, opt] if *opt == "-N" => Some(Instruction::PRINT(parse_reg(reg), false)),
-                        ["PRINTCH", reg] => Some(Instruction::PRINTCH(parse_reg(reg), true)),
-                        ["PRINTCH", reg, opt] if *opt == "-N" => Some(Instruction::PRINTCH(parse_reg(reg), false)),
-                        ["ADD", reg, src] => Some(Instruction::ADD(parse_reg(reg), parse_source(src))),
-                        ["SUB", reg, src] => Some(Instruction::SUB(parse_reg(reg), parse_source(src))),
-                        ["MUL", reg, src] => Some(Instruction::MUL(parse_reg(reg), parse_source(src))),
-                        ["MULH", dest, src1, src2] => Some(Instruction::MULH(parse_reg(dest), parse_reg(src1), parse_reg(src2))),
-                        ["DIV", reg, src] => Some(Instruction::DIV(parse_reg(reg), parse_source(src))),
-                        ["STORE", reg, src] => Some(Instruction::STORE(parse_reg(reg), parse_mem_src(src))),
-                        ["JMP", addr] => Some(Instruction::JMP(addr.parse().unwrap())),
-                        ["JZ", addr] => Some(Instruction::JZ(addr.parse().unwrap())),
-                        ["JNZ", addr] => Some(Instruction::JNZ(addr.parse().unwrap())),
-                        ["LOOP", addr, reg] => Some(Instruction::LOOP(addr.parse().unwrap(), parse_reg(reg))),
-                        ["INPUT", reg] => Some(Instruction::INPUT(parse_reg(reg))),
-                        ["HALT"] => Some(Instruction::HALT),
-                        _ => panic!("Unknown instruction: {}", segment),
-                    }
+                    parse_instruction(&parts)
                 })
             })
             .collect()
     } else {
-        vec![Instruction::HALT]
+        println!("IDLE MODE");
+        println!("---------------------------------------------------");
+        println!("No file provided. Enter instructions manually:");
+        println!("---------------------------------------------------");
+        println!("Type 'RUN' to stop the program.");
+        println!("---------------------------------------------------");
+        let mut program = Vec::new();
+        loop {
+            let mut input = String::new();
+            std::io::stdin()
+                .read_line(&mut input)
+                .expect("Failed to read line");
+            let line = input.trim();
+            if line.eq_ignore_ascii_case("RUN") {
+                break;
+            }
+
+            let line = if let Some(comment_start) = line.find("//") {
+                &line[..comment_start].trim()
+            } else {
+                line
+            };
+
+            line.split(';').for_each(|segment| {
+                let segment = segment.trim();
+                if segment.is_empty() {
+                    return;
+                }
+
+                let parts: Vec<&str> = segment.split_whitespace().collect();
+                if let Some(instruction) = parse_instruction(&parts) {
+                    program.push(instruction);
+                } else {
+                    println!("Unknown instruction: {}", segment);
+                }
+            });
+        }
+        println!("---------------------------------------------------");
+        program
     }
 }
 
@@ -481,7 +522,9 @@ fn main() {
     let program = parse_program(file_path);
     let mut vm = Vm::new();
     vm.load_program(program);
+    let start_time = std::time::Instant::now();
     vm.run();
+    let elapsed_time = start_time.elapsed();
     println!("---------------------------------------------------\nExecution finished.\n---------------------------------------------------");
     println!("Registers: {:?}", vm.reg);
     println!("Memory: {:?}", vm.mem);
@@ -489,4 +532,5 @@ fn main() {
     println!("Zero Flag: {:?}", vm.zf);
     println!("Program: {:?}", vm.program);
     println!("Program Length: {:?}", vm.program.len());
+    println!("Execution time: {:?}", elapsed_time);
 }
