@@ -26,7 +26,7 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
 
 ## Example Program
 
-The files `example.e8`, `example2.e8`, and `example3.e8` contain examples of programs that demonstrate the use of registers, arithmetic operations, memory storage, and loops.
+The files [`example.e8`](example.e8), [`example2.e8`](example2.e8), [`example3.e8`](example3.e8) and [`example4.e8`](example4.e8) contain examples of programs that demonstrate the use of registers, arithmetic operations, memory storage, and loops.
 
 ```plaintext
 // FACTORIAL SCRIPT
@@ -132,9 +132,12 @@ HALT
    ```
    Replace `example.e8` with the path to your program file.
 
+   Or if no file is specified, it will run IDLE mode, where you can enter directly the instructions.
+
+
 ## How to Write Programs
 
-Programs for the emulator are written in a custom assembly-like language. Each instruction is written on a new line and can include comments starting with `//`. Refer to the example program above for syntax.
+Programs for the emulator are written in a custom assembly-like language. Each instruction is written on a new line or semicolon and can include comments starting with `//`. Refer to the example program above for syntax.
 
 ### Instruction Set
 
