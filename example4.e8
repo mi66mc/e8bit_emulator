@@ -1,0 +1,48 @@
+// 16 bits multiplier
+MOV A 0
+INPUT B
+INPUT C
+
+STORE B [254]
+STORE C [255]
+
+MOV D B
+MUL D C
+STORE D [0]
+MULH D B C
+STORE D [1]
+MOV D A
+MUL D C
+ADD D [1]
+MOV A D
+MOV B [0]
+
+PRINT A        // 3
+PRINT B        // 232 → 3*256 + 232 = 1000
+
+MOV C [254]
+MOV D [255]
+PRINT C -N
+MOV C '*'
+PRINTCH C -N
+PRINT D -N
+MOV D '='
+PRINTCH D -N
+MOV D '('
+PRINTCH D -N
+PRINT A -N
+PRINTCH C -N
+MOV D '2'
+PRINTCH D -N
+MOV D '5'
+PRINTCH D -N
+MOV D '6'
+PRINTCH D -N
+MOV D ')'
+PRINTCH D -N
+MOV C '+'
+PRINTCH C -N
+PRINT B -N
+
+
+HALT
