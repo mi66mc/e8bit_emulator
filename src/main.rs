@@ -1,3 +1,6 @@
+use std::time::Duration;
+use std::io::{stdout, Write};
+
 #[derive(Debug)]
 struct Vm {
     pc: u16,
@@ -5,6 +8,7 @@ struct Vm {
     mem: [u8; 256],
     program: Vec<Instruction>,
     zf: bool,
+    screen: [[char; 80]; 25],
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -31,6 +35,9 @@ enum Instruction {
     PRINT(Reg, bool),
     PRINTCH(Reg, bool),
     INPUT(Reg),
+    DRAW(Source, Source, Source),
+    CLS,
+    RENDER,
     HALT
 }
 
@@ -55,6 +62,7 @@ impl Vm {
             mem: [0; 256],
             program: Vec::new(),
             zf: false,
+            screen: [[' '; 80]; 25],
         }
     }
 
@@ -89,6 +97,9 @@ impl Vm {
                 Instruction::PRINT(reg, opt) => self.print(*reg, *opt),
                 Instruction::PRINTCH(reg, opt) => self.printch(*reg, *opt),
                 Instruction::INPUT(reg) => self.input(*reg),
+                Instruction::DRAW(x, y, src) => self.draw(*x, *y, *src),
+                Instruction::CLS => self.cls(),
+                Instruction::RENDER => self.render_screen(),
                 Instruction::HALT => {
                     println!("\n!-!- HALT !-!\n");
                     break;
@@ -333,7 +344,6 @@ impl Vm {
             println!("{}", val);
         } else {
             print!("{}", val);
-            use std::io::{stdout, Write};
             let _ = stdout().flush();
         }
     }
@@ -344,13 +354,11 @@ impl Vm {
             println!("{}", val as char);
         } else {
             print!("{}", val as char);
-            use std::io::{stdout, Write};
             let _ = stdout().flush();
         }
     }
 
     fn input(&mut self, reg: Reg) {
-        use std::io::{stdout, Write};
         let mut input = String::new();
         print!("INPUT {:?}: ", reg);
         let _ = stdout().flush();
@@ -373,7 +381,59 @@ impl Vm {
     
         self.reg[self.reg_index(reg)] = value;
     }
+
+    fn draw(&mut self, x: Source, y: Source, src: Source) {
+        let x_val = match x {
+            Source::Lit(val) => val,
+            Source::Reg(reg) => self.reg[self.reg_index(reg)],
+            Source::Mem(mem_src) => match mem_src {
+                MemSrc::Addr(addr) => self.mem[addr as usize],
+                MemSrc::Reg(reg) => self.reg[self.reg_index(reg)],
+            },
+        };
+
+        let y_val = match y {
+            Source::Lit(val) => val,
+            Source::Reg(reg) => self.reg[self.reg_index(reg)],
+            Source::Mem(mem_src) => match mem_src {
+                MemSrc::Addr(addr) => self.mem[addr as usize],
+                MemSrc::Reg(reg) => self.reg[self.reg_index(reg)],
+            },
+        };
+
+        let char_val = match src {
+            Source::Lit(val) => val as char,
+            Source::Reg(reg) => self.reg[self.reg_index(reg)] as char,
+            Source::Mem(mem_src) => match mem_src {
+                MemSrc::Addr(addr) => self.mem[addr as usize] as char,
+                MemSrc::Reg(reg) => self.reg[self.reg_index(reg)] as char,
+            },
+        };
+
+        // if x or y == 0 turn into 32
+        let x_val = if x_val == 0 { 32 } else { x_val };
+        let y_val = if y_val == 0 { 32 } else { y_val };
+
+        if x_val < 80 && y_val < 25 {
+            self.screen[y_val as usize][x_val as usize] = char_val;
+        }
+    }
+
+    fn cls(&mut self) {
+        self.screen = [[' '; 80]; 25];
+    }
     
+    fn render_screen(&self) {
+        println!("{}", format!("+{}+", "-".repeat(80)));
+        for row in self.screen.iter() {
+            print!("|");
+            for &ch in row.iter() {
+                print!("{}", ch);
+            }
+            println!("|");
+        }
+        println!("{}", format!("+{}+", "-".repeat(80)));
+    }
     
 }
 
@@ -399,15 +459,19 @@ fn parse_instruction(parts: &[&str]) -> Option<Instruction> {
         ["JNZ", addr] => Some(Instruction::JNZ(addr.parse().unwrap())),
         ["LOOP", addr, reg] => Some(Instruction::LOOP(addr.parse().unwrap(), parse_reg(reg))),
         ["INPUT", reg] => Some(Instruction::INPUT(parse_reg(reg))),
+        ["DRAW", x, y, src] => Some(Instruction::DRAW(parse_source(x), parse_source(y), parse_source(src))),
+        ["RENDER"] => Some(Instruction::RENDER),
+        ["CLS"] => Some(Instruction::CLS),
         ["HALT"] => Some(Instruction::HALT),
         _ => None, // Return None for unknown instructions
     }
 }
 
-fn parse_program(file_path: Option<&str>) -> Vec<Instruction> {
+fn parse_program(file_path: Option<&str>) -> (Vec<Instruction>, bool) {
+    let mut debug_mode = false; // Add debug_mode flag
     if let Some(path) = file_path {
         let content = std::fs::read_to_string(path).expect("Failed to read file");
-        content
+        let instructions = content
             .lines()
             .flat_map(|line| {
                 let line = line.trim();
@@ -427,14 +491,14 @@ fn parse_program(file_path: Option<&str>) -> Vec<Instruction> {
                     parse_instruction(&parts)
                 })
             })
-            .collect()
+            .collect();
+        (instructions, debug_mode)
     } else {
-        println!("IDLE MODE");
-        println!("---------------------------------------------------");
+        center_print("IDLE MODE", 49);
         println!("No file provided. Enter instructions manually:");
-        println!("---------------------------------------------------");
+        println!("{}", "-".repeat(82));
         println!("Type 'RUN' to stop the program.");
-        println!("---------------------------------------------------");
+        println!("{}", "-".repeat(82));
         let mut program = Vec::new();
         loop {
             let mut input = String::new();
@@ -466,11 +530,17 @@ fn parse_program(file_path: Option<&str>) -> Vec<Instruction> {
                 }
             });
         }
-        println!("---------------------------------------------------");
-        program
+        println!("{}", "-".repeat(82));
+        print!("Enable debug mode? (y/n): ");
+        let _ = stdout().flush();
+        let mut input = String::new();
+        std::io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read line");
+        debug_mode = input.trim().eq_ignore_ascii_case("y");
+        (program, debug_mode)
     }
 }
-
 
 fn parse_reg(reg: &str) -> Reg {
     match reg {
@@ -516,21 +586,37 @@ fn parse_mem_src(src: &str) -> MemSrc {
     }
 }
 
-fn main() {
-    let args = parse_args();
-    let file_path = args.get(1).map(|s| s.as_str());
-    let program = parse_program(file_path);
-    let mut vm = Vm::new();
-    vm.load_program(program);
-    let start_time = std::time::Instant::now();
-    vm.run();
-    let elapsed_time = start_time.elapsed();
-    println!("---------------------------------------------------\nExecution finished.\n---------------------------------------------------");
+fn debug(elapsed: Duration, vm: &Vm) {
+    center_print("DEBUG INFO", 80);
     println!("Registers: {:?}", vm.reg);
     println!("Memory: {:?}", vm.mem);
     println!("Program Counter: {:?}", vm.pc);
     println!("Zero Flag: {:?}", vm.zf);
     println!("Program: {:?}", vm.program);
     println!("Program Length: {:?}", vm.program.len());
-    println!("Execution time: {:?}", elapsed_time);
+    println!("Execution time: {:?}", elapsed);
+}
+
+fn center_print(text: &str, total_width: usize) {
+    let padding = (total_width - text.len()) / 2;
+    println!("{} {} {}", "-".repeat(padding), text, "-".repeat(total_width - padding - text.len()));
+}
+
+fn main() {
+    let args = parse_args();
+    let file_path = args.get(1).map(|s| s.as_str());
+    let debug_f = args.get(2).map(|s| s.as_str());
+    let (program, debug_mode) = parse_program(file_path);
+    let mut vm = Vm::new();
+    vm.load_program(program);
+
+    center_print("OUTPUT", 80);
+
+    let start_time = std::time::Instant::now();
+    vm.run();
+    let elapsed_time = start_time.elapsed();
+    center_print("EXECUTION FINISHED", 80);
+    if debug_f == Some("-d") || debug_mode {
+        debug(elapsed_time, &vm);
+    }
 }

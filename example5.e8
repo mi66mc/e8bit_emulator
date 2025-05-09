@@ -1,0 +1,19 @@
+// DRAWING A "BOX"
+
+CLS;               // Clear the screen
+MOV A 5;           // X = 5
+MOV B 5;           // Y = 5
+MOV C '#';         // Char = '#'
+DRAW A B C;        // Draw '#' at (5, 5)
+
+MOV A 10;          // X = 10
+DRAW A B C;        // Draw '#' at (10, 5)
+
+MOV B 10;          // Y = 10
+DRAW A B C;        // Draw '#' at (10, 10)
+
+MOV A 5;           // X = 5
+DRAW A B C;        // Draw '#' at (5, 10)
+
+RENDER;            // Render the screen
+HALT;
