@@ -24,6 +24,9 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
 - **Zero Flag**: Tracks whether the result of the last operation was zero.
 - **Custom Parsing**: Accepts comments (`//`) and instruction separation via `;` or by lines.
 - **Character Literals**: Supports character literals in instructions, e.g., `MOV A 'p'`. Characters are internally treated as their ASCII numeric values and must fit within 8 bits (0–255), just like any other number.
+- **Debug Mode**: Optional debug mode for detailed output during execution.
+- **IDLE Mode**: Allows direct input of instructions for testing and debugging.
+- **Screen Rendering**: Supports drawing characters on an `80` by `25` virtual screen and rendering it to the console.
 
 ## Example Program
 
