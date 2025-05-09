@@ -189,7 +189,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `PRINTCH A -N` | Print character without newline             |
 | `DRAW X Y C`   | Draw character `C` at screen position `(X, Y)` |
 | `CLS`          | Clear the screen                           |
-| `RENDER`       | Render the screen to the console           |
+| `RENDER`       | Render the screen to the console screen is `80` by `25`   |
 | `HALT`         | Stops program execution                     |
 
 ## Args Types
