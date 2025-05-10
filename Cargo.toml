@@ -1,6 +1,6 @@
 [package]
 name = "e8bit_emulator"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2024"
 description = "8-bit emulator written in Rust."
 keywords = ["emulator", "8-bit", "rust"]
