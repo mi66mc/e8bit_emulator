@@ -413,9 +413,12 @@ impl Vm {
                 MemSrc::Reg(reg) => self.reg[self.reg_index(reg)] as char,
             },
         };
-
-        // if src == 0 turn into 32
-        let char_val = if char_val == 0 as char { ' ' } else { char_val };
+        
+        let char_val = if char_val.is_control() || char_val == '\0' {
+            ' '
+        } else {
+            char_val
+        };
 
         if x_val < 80 && y_val < 25 {
             self.screen[y_val as usize][x_val as usize] = char_val;
