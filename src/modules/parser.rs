@@ -25,12 +25,12 @@ fn parse_instruction(parts: &[&str]) -> Option<Instruction> {
         ["RENDER"] => Some(Instruction::RENDER),
         ["CLS"] => Some(Instruction::CLS),
         ["HALT"] => Some(Instruction::HALT),
-        _ => None, // Return None for unknown instructions
+        _ => None,
     }
 }
 
 pub fn parse_program(file_path: Option<&str>) -> (Vec<Instruction>, bool) {
-    let mut debug_mode = false; // Add debug_mode flag
+    let mut debug_mode = false;
     if let Some(path) = file_path {
         let content = std::fs::read_to_string(path).expect("Failed to read file");
         let instructions = content
@@ -56,7 +56,7 @@ pub fn parse_program(file_path: Option<&str>) -> (Vec<Instruction>, bool) {
             .collect();
         (instructions, debug_mode)
     } else {
-        center_print("IDLE MODE", 49);
+        center_print("IDLE MODE", 80);
         println!("No file provided. Enter instructions manually:");
         println!("{}", "-".repeat(82));
         println!("Type 'RUN' to stop the program.");
