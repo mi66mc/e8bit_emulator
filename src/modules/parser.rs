@@ -22,6 +22,7 @@ fn parse_instruction(parts: &[&str]) -> Option<Instruction> {
         ["INPUT", reg] => Some(Instruction::INPUT(parse_reg(reg))),
         ["DRAW", x, y, src] => Some(Instruction::DRAW(parse_source(x), parse_source(y), parse_source(src))),
         ["SLP", duration] => Some(Instruction::SLP(duration.parse().unwrap())),
+        ["CMP", reg, src] => Some(Instruction::CMP(parse_reg(reg), parse_source(src))),
         ["RENDER"] => Some(Instruction::RENDER),
         ["CLS"] => Some(Instruction::CLS),
         ["HALT"] => Some(Instruction::HALT),

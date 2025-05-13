@@ -38,6 +38,7 @@ pub enum Instruction {
     INPUT(Reg),
     DRAW(Source, Source, Source),
     SLP(usize),
+    CMP(Reg, Source),
     CLS,
     RENDER,
     HALT
@@ -101,7 +102,8 @@ impl Vm {
                 Instruction::PRINTCH(reg, opt) => self.printch(*reg, *opt),
                 Instruction::INPUT(reg) => self.input(*reg),
                 Instruction::DRAW(x, y, src) => self.draw(*x, *y, *src),
-                Instruction::SLP(dur) => { self.sleep(*dur); },
+                Instruction::SLP(dur) => self.sleep(*dur),
+                Instruction::CMP(reg, src) => self.cmp(*reg, *src),
                 Instruction::CLS => self.cls(),
                 Instruction::RENDER => self.render_screen(),
                 Instruction::HALT => {
@@ -443,6 +445,28 @@ impl Vm {
 
     fn sleep(&self, duration: usize) {
         std::thread::sleep(Duration::from_millis(duration as u64));
+    }
+
+    fn cmp(&mut self, reg: Reg, src: Source) {
+        match src {
+            Source::Reg(src_reg) => {
+                let src_index = self.reg_index(src_reg);
+                self.zf = self.reg[self.reg_index(reg)] == self.reg[src_index];
+            }
+            Source::Mem(value) => {
+                let v = self.mem[
+                    match value {
+                        MemSrc::Reg(src_reg) => self.reg[self.reg_index(src_reg)] as usize,
+                        MemSrc::Addr(addr) => addr as usize,
+                    }
+                ];
+                self.zf = self.reg[self.reg_index(reg)] == v;
+            }
+            Source::Lit(value) => {
+                let v = value;
+                self.zf = self.reg[self.reg_index(reg)] == v;
+            }
+        }
     }
     
 }

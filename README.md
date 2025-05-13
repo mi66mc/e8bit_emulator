@@ -21,8 +21,8 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
   - Input/Output: `INPUT`, `PRINT`, `PRINTCH`
   - Program Termination: `HALT`
   - Screen Operations: `DRAW`, `CLS`, `RENDER`
-  - Sleep: `SLP`
-- **Zero Flag**: Tracks whether the result of the last operation was zero.
+  - Comparison: `CMP`
+- **Zero Flag**: Indicates whether the result of the last operation is zero, often used for conditional branching or logical evaluations. Comparisons evaluate to `false` (non-zero) or `true` (zero), enabling conditional logic.
 - **Custom Parsing**: Accepts comments (`//`) and instruction separation via `;` or by lines.
 - **Character Literals**: Supports character literals in instructions, e.g., `MOV A 'p'`. Characters are internally treated as their ASCII numeric values and must fit within 8 bits (0–255), just like any other number.
 - **Debug Mode**: Optional debug mode for detailed output during execution.
@@ -196,6 +196,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `RENDER`       | Render the screen to the console screen is `80` by `25`   |
 | `SLP 1000`      | Pause execution for 1 second        |
 | `HALT`         | Stops program execution                     |
+| `CMP A 10`     | Compare register A with value 10. Sets the zero flag if equal. |
 
 ## Args Types
 
@@ -232,6 +233,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `RENDER`    | -                                   | -                                                                 | -                  |
 | `SLP`       | Milliseconds                     | -                                                                 | -                  |
 | `HALT`      | -                                   | -                                                                 | -                  |
+| `CMP`       | Register                            | Immediate Value, Register, or Memory Address                      | -                  |
 
 ## Future Improvements
 
