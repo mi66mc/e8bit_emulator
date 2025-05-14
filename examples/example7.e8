@@ -1,0 +1,24 @@
+// even or odd
+
+INPUT A     // get number from user input
+MOD A 2     // get remainder of A divided by 2
+CMP A 0     // compare A with 0, if true, zero flag set to true
+JZ 10        // EVEN (jump to 10th instruction if zero)
+
+MOV C 'O'   // ODD
+PRINTCH C -N
+MOV C 'D'
+PRINTCH C -N
+PRINTCH C -N
+JMP 18
+
+MOV C 'E'   // EVEN (10 index)
+PRINTCH C -N
+MOV C 'V'
+PRINTCH C -N
+MOV C 'E'
+PRINTCH C -N
+MOV C 'N'
+PRINTCH C -N
+
+HALT        // end program

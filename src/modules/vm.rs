@@ -29,6 +29,7 @@ pub enum Instruction {
     MUL(Reg, Source),
     MULH(Reg, Reg, Reg),
     DIV(Reg, Source),
+    MOD(Reg, Source),
     JMP(usize),
     JZ(usize),
     JNZ(usize),
@@ -94,6 +95,7 @@ impl Vm {
                 Instruction::MUL(reg, src) => self.mul(*reg, *src),
                 Instruction::MULH(dest, src1, src2) => self.mulh(*dest, *src1, *src2),
                 Instruction::DIV(reg, src) => self.div(*reg, *src),
+                Instruction::MOD(reg, src) => self.mod_fn(*reg, *src),
                 Instruction::JMP(addr) => { self.jmp(*addr); continue; },
                 Instruction::JZ(addr) => { self.jz(*addr); continue; },
                 Instruction::JNZ(addr) => { self.jnz(*addr); continue; },
@@ -268,6 +270,53 @@ impl Vm {
         }
 
         // println!("DIV {:?} {:?}", reg, src);
+    }
+
+    fn mod_fn(&mut self, reg: Reg, src: Source) {
+        match src {
+            Source::Reg(src_reg) => {
+                if self.reg[self.reg_index(src_reg)] == 0 {
+                    panic!("Division by zero");
+                }
+                let src_index = self.reg_index(src_reg);
+                let r = self.reg[self.reg_index(reg)].wrapping_rem(self.reg[src_index]);
+                self.zf =
+                    r == 0;
+                self.reg[self.reg_index(reg)] = r;
+            }
+            Source::Mem(value) => {
+                if self.mem[
+                    match value {
+                        MemSrc::Reg(src_reg) => self.reg[self.reg_index(src_reg)] as usize,
+                        MemSrc::Addr(addr) => addr as usize,
+                    }
+                ] == 0 {
+                    panic!("Division by zero");
+                }
+                let v = self.mem[
+                    match value {
+                        MemSrc::Reg(src_reg) => self.reg[self.reg_index(src_reg)] as usize,
+                        MemSrc::Addr(addr) => addr as usize,
+                    }
+                ];
+                let r = self.reg[self.reg_index(reg)].wrapping_rem(v);
+                self.zf =
+                    r == 0;
+                self.reg[self.reg_index(reg)] = r;
+            }
+            Source::Lit(value) => {
+                if value == 0 {
+                    panic!("Division by zero");
+                }
+                let v = value;
+                let r = self.reg[self.reg_index(reg)].wrapping_rem(v);
+                self.zf =
+                    r == 0;
+                self.reg[self.reg_index(reg)] = r;
+            }
+        }
+
+        // println!("MOD {:?} {:?}", reg, src);
     }
 
     fn mul(&mut self, reg: Reg, src: Source) {

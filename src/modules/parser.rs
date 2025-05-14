@@ -14,6 +14,7 @@ fn parse_instruction(parts: &[&str]) -> Option<Instruction> {
         ["MUL", reg, src] => Some(Instruction::MUL(parse_reg(reg), parse_source(src))),
         ["MULH", dest, src1, src2] => Some(Instruction::MULH(parse_reg(dest), parse_reg(src1), parse_reg(src2))),
         ["DIV", reg, src] => Some(Instruction::DIV(parse_reg(reg), parse_source(src))),
+        ["MOD", reg, src] => Some(Instruction::MOD(parse_reg(reg), parse_source(src))),
         ["STORE", reg, src] => Some(Instruction::STORE(parse_reg(reg), parse_mem_src(src))),
         ["JMP", addr] => Some(Instruction::JMP(addr.parse().unwrap())),
         ["JZ", addr] => Some(Instruction::JZ(addr.parse().unwrap())),
