@@ -15,23 +15,58 @@
 // [5] = star 2 y position
 // [6] = star 3 x position
 // [7] = star 3 y position
+// [8] = star 1 dir (1=right, 255=left)
+// [9] = star 2 dir
+// [10] = star 3 dir
+// [11] = frame toggle
 
 // Initialize
-  MOV A 35          // Star 1 x
+  MOV A 36          // Star 1 x (min 32+2=34, max 49-2=47)
   MOV B 0           // Star 1 y
   STORE A [2]
   STORE B [3]
-  MOV A 40          // Star 2 x
+  MOV A 41          // Star 2 x
   MOV B 5           // Star 2 y
   STORE A [4]
   STORE B [5]
-  MOV A 45          // Star 3 x
+  MOV A 46          // Star 3 x
   MOV B 10          // Star 3 y
   STORE A [6]
   STORE B [7]
   MOV C 40          // Spaceship x
   MOV D 0           // Score = 0
   STORE D [0]
+  RAND A
+  MOD A 2
+  JZ S1_RIGHT
+  MOV A 255
+  STORE A [8]
+  JMP S2_DIR
+S1_RIGHT:
+  MOV A 1
+  STORE A [8]
+S2_DIR:
+  RAND A
+  MOD A 2
+  JZ S2_RIGHT
+  MOV A 255
+  STORE A [9]
+  JMP S3_DIR
+S2_RIGHT:
+  MOV A 1
+  STORE A [9]
+S3_DIR:
+  RAND A
+  MOD A 2
+  JZ S3_RIGHT
+  MOV A 255
+  STORE A [10]
+  JMP GAME_LOOP
+S3_RIGHT:
+  MOV A 1
+  STORE A [10]
+MOV A 0
+STORE A [11]     // frame toggle
 
 GAME_LOOP:
   CTS
@@ -51,10 +86,10 @@ GAME_LOOP:
   // Draw spaceship
   DRAW C 23 'W'
 
-  // Draw walls (x=30 and x=49, y=0 to 24)
+  // Draw walls (x=32 and x=49, y=0 to 24)
   MOV B 0
 WALL_LOOP:
-  DRAW 30 B '#'
+  DRAW 32 B '#'
   DRAW 49 B '#'
   ADD B 1
   CMP B 25
@@ -71,31 +106,81 @@ WALL_LOOP:
   DRAW 1 0 D
 
   RENDER
-  SLP 80            // Frame delay
+  SLP 150            // Frame delay
 
-  // Handle input (left=1, right=2, none=0)
-  INPUT D
-  CMP D 1
+  // Input (use INKEY and '1'/'2')
+  INKEY D
+  CMP D '1'
   JZ MOVE_LEFT
-  CMP D 2
+  CMP D '2'
   JZ MOVE_RIGHT
+
+  // Toggle frame
+  MOV A [11]
+  ADD A 1
+  MOD A 2
+  STORE A [11]
+  CMP A 0
+  JNZ LOOP_CONT
+
   JMP UPDATE_STARS
 
 MOVE_LEFT:
   SUB C 1
-  CMP C 30          // Left wall
-  JNZ UPDATE_STARS
-  MOV C 31          // Stay within wall
-  JMP UPDATE_STARS
+  CMP C 32          // Left wall
+  JNZ AFTER_INPUT
+  MOV C 33          // Stay within wall
+  JMP AFTER_INPUT
 
 MOVE_RIGHT:
   ADD C 1
   CMP C 49          // Right wall
-  JNZ UPDATE_STARS
+  JNZ AFTER_INPUT
   MOV C 48          // Stay within wall
 
+AFTER_INPUT:
+  // Toggle frame
+  MOV A [11]
+  ADD A 1
+  MOD A 2
+  STORE A [11]
+  CMP A 0
+  JNZ LOOP_CONT
+
+  JMP UPDATE_STARS
+
 UPDATE_STARS:
-  // Update star 1
+  // --- Star 1 ---
+  MOV A [8]
+  CMP A 1
+  JZ STAR1_RIGHT
+  // Left
+  MOV A [2]
+  SUB A 1
+  CMP A 33
+  JNZ STAR1_STORE_X
+  MOV A 1
+  STORE A [8]       // Change dir to right
+  MOV A 33
+  STORE A [2]
+  JMP STAR1_Y
+STAR1_STORE_X:
+  STORE A [2]
+  JMP STAR1_Y
+STAR1_RIGHT:
+  MOV A [2]
+  ADD A 1
+  CMP A 48
+  JNZ STAR1_STORE_XR
+  MOV A 255
+  STORE A [8]       // Change dir to left
+  MOV A 48
+  STORE A [2]
+  JMP STAR1_Y
+STAR1_STORE_XR:
+  STORE A [2]
+
+STAR1_Y:
   MOV B [3]
   ADD B 1
   CMP B 23
@@ -117,14 +202,53 @@ SCORE1:
   ADD D 1
   STORE D [0]
   RAND A            // Random 0–255
-  MOD A 18          // Range 0–17
-  ADD A 31          // Shift to 31–48
+  MOD A 14          // Range 0–13
+  ADD A 34          // Shift to 34–47 (at least 2 from wall)
   STORE A [2]
   MOV B 0           // Reset y
   STORE B [3]
+  RAND D
+  MOD D 2
+  JZ S1R
+  MOV D 255
+  STORE D [8]
+  JMP UPDATE_STAR2
+S1R:
+  MOV D 1
+  STORE D [8]
 
 UPDATE_STAR2:
-  // Update star 2
+  // --- Star 2 ---
+  MOV A [9]
+  CMP A 1
+  JZ STAR2_RIGHT
+  // Left
+  MOV A [4]
+  SUB A 1
+  CMP A 33
+  JNZ STAR2_STORE_X
+  MOV A 1
+  STORE A [9]
+  MOV A 33
+  STORE A [4]
+  JMP STAR2_Y
+STAR2_STORE_X:
+  STORE A [4]
+  JMP STAR2_Y
+STAR2_RIGHT:
+  MOV A [4]
+  ADD A 1
+  CMP A 48
+  JNZ STAR2_STORE_XR
+  MOV A 255
+  STORE A [9]
+  MOV A 48
+  STORE A [4]
+  JMP STAR2_Y
+STAR2_STORE_XR:
+  STORE A [4]
+
+STAR2_Y:
   MOV B [5]
   ADD B 1
   CMP B 23
@@ -146,14 +270,53 @@ SCORE2:
   ADD D 1
   STORE D [0]
   RAND A            // Random 0–255
-  MOD A 18          // Range 0–17
-  ADD A 31          // Shift to 31–48
+  MOD A 14
+  ADD A 34
   STORE A [4]
-  MOV B 0           // Reset y
+  MOV B 0
   STORE B [5]
+  RAND D
+  MOD D 2
+  JZ S2R
+  MOV D 255
+  STORE D [9]
+  JMP UPDATE_STAR3
+S2R:
+  MOV D 1
+  STORE D [9]
 
 UPDATE_STAR3:
-  // Update star 3
+  // --- Star 3 ---
+  MOV A [10]
+  CMP A 1
+  JZ STAR3_RIGHT
+  // Left
+  MOV A [6]
+  SUB A 1
+  CMP A 33
+  JNZ STAR3_STORE_X
+  MOV A 1
+  STORE A [10]
+  MOV A 33
+  STORE A [6]
+  JMP STAR3_Y
+STAR3_STORE_X:
+  STORE A [6]
+  JMP STAR3_Y
+STAR3_RIGHT:
+  MOV A [6]
+  ADD A 1
+  CMP A 48
+  JNZ STAR3_STORE_XR
+  MOV A 255
+  STORE A [10]
+  MOV A 48
+  STORE A [6]
+  JMP STAR3_Y
+STAR3_STORE_XR:
+  STORE A [6]
+
+STAR3_Y:
   MOV B [7]
   ADD B 1
   CMP B 23
@@ -175,11 +338,20 @@ SCORE3:
   ADD D 1
   STORE D [0]
   RAND A            // Random 0–255
-  MOD A 18          // Range 0–17
-  ADD A 31          // Shift to 31–48
+  MOD A 14
+  ADD A 34
   STORE A [6]
-  MOV B 0           // Reset y
+  MOV B 0
   STORE B [7]
+  RAND D
+  MOD D 2
+  JZ S3R
+  MOV D 255
+  STORE D [10]
+  JMP LOOP_CONT
+S3R:
+  MOV D 1
+  STORE D [10]
 
 LOOP_CONT:
   JMP GAME_LOOP

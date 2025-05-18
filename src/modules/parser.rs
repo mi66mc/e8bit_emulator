@@ -29,6 +29,7 @@ fn parse_instruction(parts: &[&str], label_map: &std::collections::HashMap<Strin
         ["JNZ", addr] => Some(Instruction::JNZ(parse_label_or_addr(addr, label_map))),
         ["LOOP", addr, reg] => Some(Instruction::LOOP(parse_label_or_addr(addr, label_map), parse_reg(reg))),
         ["INPUT", reg] => Some(Instruction::INPUT(parse_reg(reg))),
+        ["INKEY", reg] => Some(Instruction::INKEY(parse_reg(reg))),
         ["DRAW", x, y, src] => Some(Instruction::DRAW(parse_source(x), parse_source(y), parse_source(src))),
         ["SLP", duration] => Some(Instruction::SLP(duration.parse().unwrap())),
         ["CMP", reg, src] => Some(Instruction::CMP(parse_reg(reg), parse_source(src))),

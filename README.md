@@ -139,6 +139,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `STORE A [0]`    | Store A into memory\[0]                                          |
 | `STORE A [B]`    | Store A into memory at index in B                                |
 | `INPUT A`        | Read input (u8 or char) into register A                          |
+| `INKEY A`        | Reads a single key press (non-blocking), stores ASCII code of the key in register A, or 0 if no key was pressed. Only character keys are returned. |
 | `JMP 10` / `JMP LABEL` | Jump to instruction index 10 or to label `LABEL`           |
 | `JZ 5` / `JZ LABEL`    | Jump to index 5 or label if last result was 0 (zero flag set) |
 | `JNZ 8` / `JNZ LABEL`  | Jump if last result was not zero (zero flag not set)       |
@@ -213,3 +214,11 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 ## License
 
 This project is open-source and available under the MIT License.
+
+### Notes on `INKEY`
+
+- `INKEY A` reads a single key press (non-blocking) and stores the ASCII code of the pressed key in register `A`.
+- If no key was pressed, `A` is set to `0`.
+- Only character keys are returned (e.g., letters, numbers, symbols). Special keys like arrows, F1, etc., are ignored or return 0.
+- The zero flag is set if no key was pressed (`A == 0`).
+- Useful for real-time input in games or interactive programs.

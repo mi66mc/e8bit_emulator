@@ -1,6 +1,8 @@
 use std::time::Duration;
 use std::io::{ stdout, Write };
 use crate::modules::utils::{ clear_terminal_screen, simple_rand };
+use crossterm::event::{ poll, read, Event, KeyEvent, KeyCode };
+// use crossterm::terminal::{ enable_raw_mode, disable_raw_mode };
 
 #[derive(Debug)]
 pub struct Vm {
@@ -38,6 +40,7 @@ pub enum Instruction {
     PRINT(Reg, bool),
     PRINTCH(Reg, bool),
     INPUT(Reg),
+    INKEY(Reg),
     DRAW(Source, Source, Source),
     SLP(usize),
     CMP(Reg, Source),
@@ -88,6 +91,7 @@ impl Vm {
     }
 
     pub fn run(&mut self) {
+        // enable_raw_mode().unwrap();
         while self.pc < self.program.len() as u16 {
             let instruction = &self.program[self.pc as usize];
             match instruction {
@@ -106,6 +110,7 @@ impl Vm {
                 Instruction::PRINT(reg, opt) => self.print(*reg, *opt),
                 Instruction::PRINTCH(reg, opt) => self.printch(*reg, *opt),
                 Instruction::INPUT(reg) => self.input(*reg),
+                Instruction::INKEY(reg) => self.inkey(*reg),
                 Instruction::DRAW(x, y, src) => self.draw(*x, *y, *src),
                 Instruction::SLP(dur) => self.sleep(*dur),
                 Instruction::CMP(reg, src) => self.cmp(*reg, *src),
@@ -120,6 +125,7 @@ impl Vm {
             }
             self.pc += 1;
         }
+        // disable_raw_mode().unwrap();
     }
 
     fn mov(&mut self, reg: Reg, src: Source) {
@@ -439,6 +445,28 @@ impl Vm {
             panic!("Invalid input: expected a number or single character");
         };
     
+        self.reg[self.reg_index(reg)] = value;
+    }
+
+    fn inkey(&mut self, reg: Reg) {
+        use std::time::Duration;
+        let mut value = 0u8;
+        if poll(Duration::from_millis(0)).unwrap() {
+            if let Event::Key(KeyEvent { code, .. }) = read().unwrap() {
+                match code {
+                    KeyCode::Char(c) => value = c as u8,
+                    KeyCode::Enter => value = b'\n',
+                    KeyCode::Tab => value = b'\t',
+                    KeyCode::Backspace => value = 8,
+                    KeyCode::Esc => value = 27,
+                    _ => value = 0,
+                }
+            }
+            while poll(Duration::from_millis(0)).unwrap() {
+                let _ = read();
+            }
+        }
+        self.zf = value == 0;
         self.reg[self.reg_index(reg)] = value;
     }
 
