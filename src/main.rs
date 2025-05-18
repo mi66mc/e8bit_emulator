@@ -1,6 +1,6 @@
 mod modules;
 use modules::vm::Vm;
-use modules::utils::{ center_print, debug, parse_args, simple_rand };
+use modules::utils::{ center_print, debug, parse_args };
 use modules::parser::parse_program;
 
 fn main() {
