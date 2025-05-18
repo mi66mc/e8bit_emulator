@@ -11,7 +11,7 @@ CTS
 CLS
 DRAW A B E
 RENDER
-SLP 500
+SLP 100
 
 // Update X
 ADD A C
