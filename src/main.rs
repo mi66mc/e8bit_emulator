@@ -20,6 +20,4 @@ fn main() {
     if debug_f == Some("-d") || debug_mode {
         debug(elapsed_time, &vm);
     }
-
-    println!("{}", simple_rand());
 }
