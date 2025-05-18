@@ -28,6 +28,25 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
 - **Debug Mode**: Optional debug mode for detailed output during execution.
 - **IDLE Mode**: Allows direct input of instructions for testing and debugging.
 - **Screen Rendering**: Supports drawing characters on an `80` by `25` virtual screen and rendering it to the console.
+- **Label Support**: You can now use labels for control flow instructions (`JMP`, `JZ`, `JNZ`, `LOOP`) instead of numeric instruction indices.
+
+## Label Support
+
+You can define a label by writing it at the start of a line followed by a colon, e.g. `LOOP_START:`.  
+You can then use the label name as the target for `JMP`, `JZ`, `JNZ`, or `LOOP` instructions:
+
+```plaintext
+MOV A 0
+MOV B 10
+LOOP_START:
+ADD A 1
+PRINT A
+CMP A B
+JNZ LOOP_START
+HALT
+```
+
+This is equivalent to using numeric indices, but is easier to read and maintain.
 
 ## Example Programs
 
@@ -40,16 +59,17 @@ The files [`example.e8`](/examples/example.e8), [`example2.e8`](/examples/exampl
 INPUT A     // get number from user input
 MOD A 2     // get remainder of A divided by 2
 CMP A 0     // compare A with 0, if true, zero flag set to true
-JZ 10        // EVEN (jump to 10th instruction if zero)
+JZ EVEN     // EVEN (jump to label EVEN if zero)
 
 MOV C 'O'   // ODD
 PRINTCH C -N
 MOV C 'D'
 PRINTCH C -N
 PRINTCH C -N
-JMP 18
+JMP END
 
-MOV C 'E'   // EVEN (10 index)
+EVEN:
+MOV C 'E'   // EVEN
 PRINTCH C -N
 MOV C 'V'
 PRINTCH C -N
@@ -58,6 +78,7 @@ PRINTCH C -N
 MOV C 'N'
 PRINTCH C -N
 
+END:
 HALT        // end program
 ```
 
@@ -69,10 +90,10 @@ HALT        // end program
 MOV A 1;           // A = 1 (result)
 MOV B 5;           // B = 5 (number to get factorial)
 
-// loop starts here (index 2)
+LOOP_START:
 MUL A B;           // A *= B
 SUB B 1;           // B -= 1
-LOOP 2 B;           // if B != 0 go to index 2 (MUL A B)
+LOOP LOOP_START B; // if B != 0 go to LOOP_START
 
 // END
 PRINT A;           // shows result
@@ -119,10 +140,10 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `STORE A [0]`    | Store A into memory\[0]                                          |
 | `STORE A [B]`    | Store A into memory at index in B                                |
 | `INPUT A`        | Read input (u8 or char) into register A                          |
-| `JMP 10`         | Jump to instruction index 10                                     |
-| `JZ 5`           | Jump to index 5 if last result was 0 (zero flag set)             |
-| `JNZ 8`          | Jump if last result was not zero (zero flag not set)             |
-| `LOOP 3 C`       | Jump to index 3 while C != 0                                     |
+| `JMP 10` / `JMP LABEL` | Jump to instruction index 10 or to label `LABEL`           |
+| `JZ 5` / `JZ LABEL`    | Jump to index 5 or label if last result was 0 (zero flag set) |
+| `JNZ 8` / `JNZ LABEL`  | Jump if last result was not zero (zero flag not set)       |
+| `LOOP 3 C` / `LOOP LABEL C` | Jump to index 3 or label while C != 0                 |
 | `PRINT A`        | Print value of A with newline                                    |
 | `PRINT A -N`     | Print value of A without newline                                 |
 | `PRINTCH A`      | Print character represented by value in A                        |

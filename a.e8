@@ -1,0 +1,8 @@
+MOV A 0;
+MOV B 20;
+LOOP:
+ADD A 1;
+PRINT A;
+CMP A B;
+JNZ LOOP;
+HALT;

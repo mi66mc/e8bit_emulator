@@ -4,15 +4,10 @@
 MOV A 1;           // A = 1 (result)
 MOV B 5;           // B = 5 (number to get factorial)
 
-// loop starts here (index 2)
+LOOP_START:
 MUL A B;           // A *= B
 SUB B 1;           // B -= 1
-LOOP 2 B;           // if B != 0 go to index 2 (MUL A B)
-
-STORE A [0];
-MOV C [B];
-
-PRINT C;
+LOOP LOOP_START B; // if B != 0 go to LOOP_START
 
 // END
 PRINT A;           // shows result

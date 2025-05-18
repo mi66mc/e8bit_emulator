@@ -2,7 +2,16 @@ use std::io::{stdout, Write};
 use crate::modules::utils::center_print;
 use crate::modules::vm::{Instruction, Reg, Source, MemSrc};
 
-fn parse_instruction(parts: &[&str]) -> Option<Instruction> {
+// Helper to parse label or numeric address
+fn parse_label_or_addr(addr: &str, label_map: &std::collections::HashMap<String, usize>) -> usize {
+    if let Ok(num) = addr.parse::<usize>() {
+        num
+    } else {
+        *label_map.get(addr).unwrap_or_else(|| panic!("Unknown label: {}", addr))
+    }
+}
+
+fn parse_instruction(parts: &[&str], label_map: &std::collections::HashMap<String, usize>) -> Option<Instruction> {
     match parts {
         ["MOV", reg, src] => Some(Instruction::MOV(parse_reg(reg), parse_source(src))),
         ["PRINT", reg] => Some(Instruction::PRINT(parse_reg(reg), true)),
@@ -16,10 +25,10 @@ fn parse_instruction(parts: &[&str]) -> Option<Instruction> {
         ["DIV", reg, src] => Some(Instruction::DIV(parse_reg(reg), parse_source(src))),
         ["MOD", reg, src] => Some(Instruction::MOD(parse_reg(reg), parse_source(src))),
         ["STORE", reg, src] => Some(Instruction::STORE(parse_reg(reg), parse_mem_src(src))),
-        ["JMP", addr] => Some(Instruction::JMP(addr.parse().unwrap())),
-        ["JZ", addr] => Some(Instruction::JZ(addr.parse().unwrap())),
-        ["JNZ", addr] => Some(Instruction::JNZ(addr.parse().unwrap())),
-        ["LOOP", addr, reg] => Some(Instruction::LOOP(addr.parse().unwrap(), parse_reg(reg))),
+        ["JMP", addr] => Some(Instruction::JMP(parse_label_or_addr(addr, label_map))),
+        ["JZ", addr] => Some(Instruction::JZ(parse_label_or_addr(addr, label_map))),
+        ["JNZ", addr] => Some(Instruction::JNZ(parse_label_or_addr(addr, label_map))),
+        ["LOOP", addr, reg] => Some(Instruction::LOOP(parse_label_or_addr(addr, label_map), parse_reg(reg))),
         ["INPUT", reg] => Some(Instruction::INPUT(parse_reg(reg))),
         ["DRAW", x, y, src] => Some(Instruction::DRAW(parse_source(x), parse_source(y), parse_source(src))),
         ["SLP", duration] => Some(Instruction::SLP(duration.parse().unwrap())),
@@ -35,27 +44,35 @@ pub fn parse_program(file_path: Option<&str>) -> (Vec<Instruction>, bool) {
     let mut debug_mode = false;
     if let Some(path) = file_path {
         let content = std::fs::read_to_string(path).expect("Failed to read file");
-        let instructions = content
-            .lines()
-            .flat_map(|line| {
-                let line = line.trim();
-                let line = if let Some(comment_start) = line.find("//") {
-                    &line[..comment_start].trim()
+        let mut label_map = std::collections::HashMap::new();
+        let mut instructions_raw = Vec::new();
+        let mut pc = 0;
+        for line in content.lines() {
+            let line = line.trim();
+            let line = if let Some(comment_start) = line.find("//") {
+                &line[..comment_start].trim()
+            } else {
+                line
+            };
+            for segment in line.split(';') {
+                let segment = segment.trim();
+                if segment.is_empty() {
+                    continue;
+                }
+                if segment.ends_with(':') {
+                    let label = segment.trim_end_matches(':').to_string();
+                    label_map.insert(label, pc);
                 } else {
-                    line
-                };
-
-                line.split(';').filter_map(|segment| {
-                    let segment = segment.trim();
-                    if segment.is_empty() {
-                        return None;
-                    }
-
-                    let parts: Vec<&str> = segment.split_whitespace().collect();
-                    parse_instruction(&parts)
-                })
-            })
-            .collect();
+                    instructions_raw.push(segment.to_string());
+                    pc += 1;
+                }
+            }
+        }
+        let instructions = instructions_raw.iter().map(|segment| {
+            let parts: Vec<&str> = segment.split_whitespace().collect();
+            parse_instruction(&parts, &label_map)
+                .unwrap_or_else(|| panic!("Unknown instruction: {}", segment))
+        }).collect();
         (instructions, debug_mode)
     } else {
         center_print("IDLE MODE", 80);
@@ -63,7 +80,9 @@ pub fn parse_program(file_path: Option<&str>) -> (Vec<Instruction>, bool) {
         println!("{}", "-".repeat(82));
         println!("Type 'RUN' to stop the program.");
         println!("{}", "-".repeat(82));
-        let mut program = Vec::new();
+        let mut label_map = std::collections::HashMap::new();
+        let mut instructions_raw = Vec::new();
+        let mut pc = 0;
         loop {
             let mut input = String::new();
             std::io::stdin()
@@ -80,19 +99,28 @@ pub fn parse_program(file_path: Option<&str>) -> (Vec<Instruction>, bool) {
                 line
             };
 
-            line.split(';').for_each(|segment| {
+            for segment in line.split(';') {
                 let segment = segment.trim();
                 if segment.is_empty() {
-                    return;
+                    continue;
                 }
-
-                let parts: Vec<&str> = segment.split_whitespace().collect();
-                if let Some(instruction) = parse_instruction(&parts) {
-                    program.push(instruction);
+                if segment.ends_with(':') {
+                    let label = segment.trim_end_matches(':').to_string();
+                    label_map.insert(label, pc);
                 } else {
-                    println!("Unknown instruction: {}", segment);
+                    instructions_raw.push(segment.to_string());
+                    pc += 1;
                 }
-            });
+            }
+        }
+        let mut program = Vec::new();
+        for segment in instructions_raw {
+            let parts: Vec<&str> = segment.split_whitespace().collect();
+            if let Some(instruction) = parse_instruction(&parts, &label_map) {
+                program.push(instruction);
+            } else {
+                println!("Unknown instruction: {}", segment);
+            }
         }
         println!("{}", "-".repeat(82));
         print!("Enable debug mode? (y/n): ");
