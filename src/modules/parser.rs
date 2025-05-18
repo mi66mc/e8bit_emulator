@@ -2,7 +2,6 @@ use std::io::{stdout, Write};
 use crate::modules::utils::center_print;
 use crate::modules::vm::{Instruction, Reg, Source, MemSrc};
 
-// Helper to parse label or numeric address
 fn parse_label_or_addr(addr: &str, label_map: &std::collections::HashMap<String, usize>) -> usize {
     if let Ok(num) = addr.parse::<usize>() {
         num
@@ -35,6 +34,7 @@ fn parse_instruction(parts: &[&str], label_map: &std::collections::HashMap<Strin
         ["CMP", reg, src] => Some(Instruction::CMP(parse_reg(reg), parse_source(src))),
         ["RENDER"] => Some(Instruction::RENDER),
         ["CLS"] => Some(Instruction::CLS),
+        ["CTS"] => Some(Instruction::CTS),
         ["HALT"] => Some(Instruction::HALT),
         _ => None,
     }

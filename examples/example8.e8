@@ -1,0 +1,47 @@
+// BALL ANIMATION
+
+MOV A 0         // A = x position
+MOV B 0         // B = y position
+MOV C 1         // C = x direction (1 = right, 255 = left)
+MOV D 1         // D = y direction (1 = down, 255 = up)
+MOV E 'O'       // E = character to draw
+
+LOOP_START:
+CTS
+CLS
+DRAW A B E
+RENDER
+SLP 500
+
+// Update X
+ADD A C
+CMP A 79
+JNZ CHECK_X_MIN
+// Hit right edge
+MOV C 255       // Change direction to left
+JMP CHECK_Y
+
+CHECK_X_MIN:
+CMP A 0
+JNZ CHECK_Y
+// Hit left edge
+MOV C 1         // Change direction to right
+
+CHECK_Y:
+// Update Y
+ADD B D
+CMP B 24
+JNZ CHECK_Y_MIN
+// Hit bottom edge
+MOV D 255       // Change direction to up
+JMP LOOP_CONT
+
+CHECK_Y_MIN:
+CMP B 0
+JNZ LOOP_CONT
+// Hit top edge
+MOV D 1         // Change direction to down
+
+LOOP_CONT:
+JMP LOOP_START
+HALT

@@ -82,7 +82,7 @@ END:
 HALT        // end program
 ```
 
-**Factorial Example:**
+**Factorial Example (`example.e8`):**
 ```plaintext
 // FACTORIAL SCRIPT
 
@@ -99,8 +99,6 @@ LOOP LOOP_START B; // if B != 0 go to LOOP_START
 PRINT A;           // shows result
 HALT;
 ```
-
-...
 
 ## How to Run
 
@@ -150,6 +148,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `PRINTCH A -N`   | Print character without newline                                  |
 | `DRAW X Y C`     | Draw character `C` at screen position `(X, Y)`                   |
 | `CLS`            | Clear the screen                                                 |
+| `CTS`            | Clear the terminal screen                                        |
 | `RENDER`         | Render the screen to the console (80x25)                         |
 | `SLP 1000`       | Pause execution for 1 second (1000 ms)                           |
 | `HALT`           | Stops program execution                                          |
@@ -188,6 +187,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `INPUT`     | Register                            | -                                                                 | -                  |
 | `DRAW`      | Immediate Value, Register, or Memory Address | Immediate Value, Register, or Memory Address | Immediate Value, Register, or Memory Address            |
 | `CLS`       | -                                   | -                                                                 | -                  |
+| `CTS`       | -                                   | -                                                                 | -                  |
 | `RENDER`    | -                                   | -                                                                 | -                  |
 | `SLP`       | Milliseconds                        | -                                                                 | -                  |
 | `HALT`      | -                                   | -                                                                 | -                  |
@@ -195,6 +195,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 
 ## Tips
 
+- Use the `CTS` instruction to clear the terminal screen and `CLS` to clear virtual screen.
 - Use the `MOD` instruction to easily check for even/odd numbers or perform modular arithmetic.
 - The `CMP` instruction is useful for conditional branching with `JZ` and `JNZ`.
 - Use `PRINTCH` for ASCII output and `PRINT` for numeric output.

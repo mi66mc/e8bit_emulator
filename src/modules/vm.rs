@@ -1,5 +1,6 @@
 use std::time::Duration;
-use std::io::{stdout, Write};
+use std::io::{ stdout, Write };
+use crate::modules::utils::clear_terminal_screen;
 
 #[derive(Debug)]
 pub struct Vm {
@@ -41,6 +42,7 @@ pub enum Instruction {
     SLP(usize),
     CMP(Reg, Source),
     CLS,
+    CTS,
     RENDER,
     HALT
 }
@@ -107,6 +109,7 @@ impl Vm {
                 Instruction::SLP(dur) => self.sleep(*dur),
                 Instruction::CMP(reg, src) => self.cmp(*reg, *src),
                 Instruction::CLS => self.cls(),
+                Instruction::CTS => self.cts(),
                 Instruction::RENDER => self.render_screen(),
                 Instruction::HALT => {
                     println!("\n!-!- HALT !-!\n");
@@ -478,6 +481,10 @@ impl Vm {
 
     fn cls(&mut self) {
         self.screen = [[' '; 80]; 25];
+    }
+
+    fn cts(&mut self) {
+        clear_terminal_screen();
     }
     
     fn render_screen(&self) {
