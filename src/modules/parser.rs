@@ -32,6 +32,7 @@ fn parse_instruction(parts: &[&str], label_map: &std::collections::HashMap<Strin
         ["DRAW", x, y, src] => Some(Instruction::DRAW(parse_source(x), parse_source(y), parse_source(src))),
         ["SLP", duration] => Some(Instruction::SLP(duration.parse().unwrap())),
         ["CMP", reg, src] => Some(Instruction::CMP(parse_reg(reg), parse_source(src))),
+        ["RAND", reg] => Some(Instruction::RAND(parse_reg(reg))),
         ["RENDER"] => Some(Instruction::RENDER),
         ["CLS"] => Some(Instruction::CLS),
         ["CTS"] => Some(Instruction::CTS),

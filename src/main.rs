@@ -1,6 +1,6 @@
 mod modules;
 use modules::vm::Vm;
-use modules::utils::{ center_print, debug, parse_args };
+use modules::utils::{ center_print, debug, parse_args, simple_rand };
 use modules::parser::parse_program;
 
 fn main() {
@@ -20,4 +20,6 @@ fn main() {
     if debug_f == Some("-d") || debug_mode {
         debug(elapsed_time, &vm);
     }
+
+    println!("{}", simple_rand());
 }

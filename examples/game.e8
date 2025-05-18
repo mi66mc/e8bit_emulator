@@ -1,0 +1,209 @@
+// STAR COLLECTOR v3 WITH RAND FOR e8BIT EMULATOR
+
+// Registers:
+// A = general-purpose (drawing, calculations)
+// B = loop counter or temporary y-position
+// C = spaceship x position
+// D = temporary register for score/random
+// E = unused (previously random seed)
+
+// Memory:
+// [0] = score
+// [2] = star 1 x position
+// [3] = star 1 y position
+// [4] = star 2 x position
+// [5] = star 2 y position
+// [6] = star 3 x position
+// [7] = star 3 y position
+
+// Initialize
+  MOV A 35          // Star 1 x
+  MOV B 0           // Star 1 y
+  STORE A [2]
+  STORE B [3]
+  MOV A 40          // Star 2 x
+  MOV B 5           // Star 2 y
+  STORE A [4]
+  STORE B [5]
+  MOV A 45          // Star 3 x
+  MOV B 10          // Star 3 y
+  STORE A [6]
+  STORE B [7]
+  MOV C 40          // Spaceship x
+  MOV D 0           // Score = 0
+  STORE D [0]
+
+GAME_LOOP:
+  CTS
+  CLS
+
+  // Draw stars
+  MOV A [2]         // Star 1
+  MOV B [3]
+  DRAW A B '*'
+  MOV A [4]         // Star 2
+  MOV B [5]
+  DRAW A B '*'
+  MOV A [6]         // Star 3
+  MOV B [7]
+  DRAW A B '*'
+
+  // Draw spaceship
+  DRAW C 23 'W'
+
+  // Draw walls (x=30 and x=49, y=0 to 24)
+  MOV B 0
+WALL_LOOP:
+  DRAW 30 B '#'
+  DRAW 49 B '#'
+  ADD B 1
+  CMP B 25
+  JNZ WALL_LOOP
+
+  // Draw score
+  MOV D [0]
+  DIV D 10
+  ADD D '0'
+  DRAW 0 0 D
+  MOV D [0]
+  MOD D 10
+  ADD D '0'
+  DRAW 1 0 D
+
+  RENDER
+  SLP 80            // Frame delay
+
+  // Handle input (left=1, right=2, none=0)
+  INPUT D
+  CMP D 1
+  JZ MOVE_LEFT
+  CMP D 2
+  JZ MOVE_RIGHT
+  JMP UPDATE_STARS
+
+MOVE_LEFT:
+  SUB C 1
+  CMP C 30          // Left wall
+  JNZ UPDATE_STARS
+  MOV C 31          // Stay within wall
+  JMP UPDATE_STARS
+
+MOVE_RIGHT:
+  ADD C 1
+  CMP C 49          // Right wall
+  JNZ UPDATE_STARS
+  MOV C 48          // Stay within wall
+
+UPDATE_STARS:
+  // Update star 1
+  MOV B [3]
+  ADD B 1
+  CMP B 23
+  JZ CHECK_CATCH1
+  CMP B 24
+  JZ GAME_OVER
+  STORE B [3]
+  JMP UPDATE_STAR2
+
+CHECK_CATCH1:
+  MOV A [2]
+  CMP A C
+  JZ SCORE1
+  STORE B [3]
+  JMP UPDATE_STAR2
+
+SCORE1:
+  MOV D [0]
+  ADD D 1
+  STORE D [0]
+  RAND A            // Random 0–255
+  MOD A 18          // Range 0–17
+  ADD A 31          // Shift to 31–48
+  STORE A [2]
+  MOV B 0           // Reset y
+  STORE B [3]
+
+UPDATE_STAR2:
+  // Update star 2
+  MOV B [5]
+  ADD B 1
+  CMP B 23
+  JZ CHECK_CATCH2
+  CMP B 24
+  JZ GAME_OVER
+  STORE B [5]
+  JMP UPDATE_STAR3
+
+CHECK_CATCH2:
+  MOV A [4]
+  CMP A C
+  JZ SCORE2
+  STORE B [5]
+  JMP UPDATE_STAR3
+
+SCORE2:
+  MOV D [0]
+  ADD D 1
+  STORE D [0]
+  RAND A            // Random 0–255
+  MOD A 18          // Range 0–17
+  ADD A 31          // Shift to 31–48
+  STORE A [4]
+  MOV B 0           // Reset y
+  STORE B [5]
+
+UPDATE_STAR3:
+  // Update star 3
+  MOV B [7]
+  ADD B 1
+  CMP B 23
+  JZ CHECK_CATCH3
+  CMP B 24
+  JZ GAME_OVER
+  STORE B [7]
+  JMP LOOP_CONT
+
+CHECK_CATCH3:
+  MOV A [6]
+  CMP A C
+  JZ SCORE3
+  STORE B [7]
+  JMP LOOP_CONT
+
+SCORE3:
+  MOV D [0]
+  ADD D 1
+  STORE D [0]
+  RAND A            // Random 0–255
+  MOD A 18          // Range 0–17
+  ADD A 31          // Shift to 31–48
+  STORE A [6]
+  MOV B 0           // Reset y
+  STORE B [7]
+
+LOOP_CONT:
+  JMP GAME_LOOP
+
+GAME_OVER:
+  CTS
+  CLS
+  // Draw "GAME OVER"
+  DRAW 36 12 'G'
+  DRAW 37 12 'A'
+  DRAW 38 12 'M'
+  DRAW 39 12 'E'
+  DRAW 41 12 'O'
+  DRAW 42 12 'V'
+  DRAW 43 12 'E'
+  DRAW 44 12 'R'
+  // Draw final score
+  MOV D [0]
+  DIV D 10
+  ADD D '0'
+  DRAW 38 13 D
+  MOV D [0]
+  MOD D 10
+  ADD D '0'
+  DRAW 39 13 D
+  RENDER
+  HALT

@@ -1,5 +1,14 @@
 use crate::modules::vm::Vm;
 use std::time::Duration;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+pub fn simple_rand() -> u8 {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .subsec_nanos();
+    ((nanos >> 8) ^ (nanos >> 16) ^ nanos) as u8
+}
 
 pub fn center_print(text: &str, total_width: usize) {
     let padding = (total_width - text.len()) / 2;

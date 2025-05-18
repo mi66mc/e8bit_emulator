@@ -1,6 +1,6 @@
 use std::time::Duration;
 use std::io::{ stdout, Write };
-use crate::modules::utils::clear_terminal_screen;
+use crate::modules::utils::{ clear_terminal_screen, simple_rand };
 
 #[derive(Debug)]
 pub struct Vm {
@@ -41,6 +41,7 @@ pub enum Instruction {
     DRAW(Source, Source, Source),
     SLP(usize),
     CMP(Reg, Source),
+    RAND(Reg),
     CLS,
     CTS,
     RENDER,
@@ -108,6 +109,7 @@ impl Vm {
                 Instruction::DRAW(x, y, src) => self.draw(*x, *y, *src),
                 Instruction::SLP(dur) => self.sleep(*dur),
                 Instruction::CMP(reg, src) => self.cmp(*reg, *src),
+                Instruction::RAND(reg) => self.random(*reg),
                 Instruction::CLS => self.cls(),
                 Instruction::CTS => self.cts(),
                 Instruction::RENDER => self.render_screen(),
@@ -523,6 +525,11 @@ impl Vm {
                 self.zf = self.reg[self.reg_index(reg)] == v;
             }
         }
+    }
+
+    fn random(&mut self, reg: Reg) {
+        let rand_value = simple_rand();
+        self.reg[self.reg_index(reg)] = rand_value;
     }
     
 }

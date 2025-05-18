@@ -22,6 +22,7 @@ This project is a simple 8-bit virtual machine (VM) emulator written in Rust. It
   - Program Termination: `HALT`
   - Screen Operations: `DRAW`, `CLS`, `RENDER`
   - Comparison: `CMP`
+  - Random Number: `RAND`
 - **Zero Flag**: Indicates whether the result of the last operation is zero, often used for conditional branching or logical evaluations. Comparisons evaluate to `false` (non-zero) or `true` (zero), enabling conditional logic.
 - **Custom Parsing**: Accepts comments (`//`) and instruction separation via `;` or by lines.
 - **Character Literals**: Supports character literals in instructions, e.g., `MOV A 'p'`. Characters are internally treated as their ASCII numeric values and must fit within 8 bits (0–255), just like any other number.
@@ -50,7 +51,7 @@ This is equivalent to using numeric indices, but is easier to read and maintain.
 
 ## Example Programs
 
-The files [`example.e8`](/examples/example.e8), [`example2.e8`](/examples/example2.e8), [`example3.e8`](/examples/example3.e8), [`example4.e8`](/examples/example4.e8), [`example5.e8`](/examples/example5.e8), [`example6.e8`](/examples/example6.e8), [`example7.e8`](/examples/example7.e8), and others contain example programs that demonstrate the use of registers, arithmetic operations, memory storage, loops, and conditional logic.
+The files [`game.e8`](/examples/game.e8), [`example.e8`](/examples/example.e8), [`example2.e8`](/examples/example2.e8), [`example3.e8`](/examples/example3.e8), [`example4.e8`](/examples/example4.e8), [`example5.e8`](/examples/example5.e8), [`example6.e8`](/examples/example6.e8), [`example7.e8`](/examples/example7.e8), and others contain example programs that demonstrate the use of registers, arithmetic operations, memory storage, loops, and conditional logic.
 
 **Even or Odd Example:**
 ```plaintext
@@ -153,6 +154,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `SLP 1000`       | Pause execution for 1 second (1000 ms)                           |
 | `HALT`           | Stops program execution                                          |
 | `CMP A 10`       | Compare register A with value 10. Sets the zero flag if equal.   |
+| `RAND A`         | Set register A to a random value between 0–255                   |
 
 ## Args Types
 
@@ -192,6 +194,7 @@ Programs for the emulator are written in a custom assembly-like language. Each i
 | `SLP`       | Milliseconds                        | -                                                                 | -                  |
 | `HALT`      | -                                   | -                                                                 | -                  |
 | `CMP`       | Register                            | Immediate Value, Register, or Memory Address                      | -                  |
+| `RAND`      | Register                            | -                                                                 | -                  |
 
 ## Tips
 
