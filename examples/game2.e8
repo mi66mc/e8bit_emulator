@@ -1,0 +1,241 @@
+// PONG GAME - e8bit
+
+// [0] = score left
+// [1] = score right
+// [2] = ball x
+// [3] = ball y
+// [4] = ball dx (1=right, 255=left)
+// [5] = ball dy (1=down, 255=up)
+// [6] = left paddle y (top)
+// [7] = right paddle y (top)
+// [8] = frame toggle
+
+MOV A 39
+STORE A [2]      // ball x
+MOV A 12
+STORE A [3]      // ball y
+MOV A 1
+STORE A [4]      // ball dx (start right)
+MOV A 1
+STORE A [5]      // ball dy (start down)
+MOV A 10
+STORE A [6]      // left paddle y
+MOV A 10
+STORE A [7]      // right paddle y
+MOV A 0
+STORE A [0]      // score left
+STORE A [1]      // score right
+MOV A 0
+STORE A [8]      // frame toggle
+
+GAME_LOOP:
+CTS
+CLS
+
+// Draw walls (top/bottom)
+MOV B 0
+WALL_LOOP:
+DRAW B 0 '-'
+DRAW B 24 '-'
+ADD B 1
+CMP B 80
+JNZ WALL_LOOP
+
+// Draw paddles (left: x=1, right: x=78, 3 chars high)
+MOV A [6]
+DRAW 1 A '|'
+ADD A 1
+DRAW 1 A '|'
+ADD A 1
+DRAW 1 A '|'
+
+MOV A [7]
+DRAW 78 A '|'
+ADD A 1
+DRAW 78 A '|'
+ADD A 1
+DRAW 78 A '|'
+
+// Draw ball (draw after paddles, so ball appears over paddle)
+MOV A [2]
+MOV B [3]
+DRAW A B 'O'
+
+// Draw score
+MOV D [0]
+ADD D '0'
+DRAW 37 1 D
+MOV D [1]
+ADD D '0'
+DRAW 42 1 D
+
+RENDER
+SLP 40
+
+// Input
+INKEY D
+CMP D '1'
+JZ LPAD_UP
+CMP D '2'
+JZ LPAD_DOWN
+CMP D '9'
+JZ RPAD_UP
+CMP D '0'
+JZ RPAD_DOWN
+
+JMP FRAME_TOGGLE
+
+LPAD_UP:
+MOV A [6]
+CMP A 1
+JZ FRAME_TOGGLE
+SUB A 1
+STORE A [6]
+JMP FRAME_TOGGLE
+
+LPAD_DOWN:
+MOV A [6]
+ADD A 1
+CMP A 21
+JZ FRAME_TOGGLE
+STORE A [6]
+JMP FRAME_TOGGLE
+
+RPAD_UP:
+MOV A [7]
+CMP A 1
+JZ FRAME_TOGGLE
+SUB A 1
+STORE A [7]
+JMP FRAME_TOGGLE
+
+RPAD_DOWN:
+MOV A [7]
+ADD A 1
+CMP A 21
+JZ FRAME_TOGGLE
+STORE A [7]
+JMP FRAME_TOGGLE
+
+FRAME_TOGGLE:
+MOV A [8]
+ADD A 1
+MOD A 2
+STORE A [8]
+CMP A 0
+JNZ GAME_LOOP
+
+// --- Ball movement ---
+MOV A [4]
+CMP A 1
+JZ BALL_RIGHT
+// Ball moving left
+MOV A [2]
+SUB A 1
+STORE A [2]
+CMP A 1
+JNZ BALL_Y
+// Check left paddle (ball must hit paddle at y == paddle, paddle+1, or paddle+2)
+MOV D [6]
+CMP B D
+JZ BOUNCE_X
+ADD D 1
+CMP B D
+JZ BOUNCE_X
+ADD D 1
+CMP B D
+JZ BOUNCE_X
+// Missed paddle, right scores
+MOV D [1]
+ADD D 1
+STORE D [1]
+JMP RESET_BALL
+BOUNCE_X:
+// Move ball to just outside paddle after bounce
+MOV A 2
+STORE A [2]
+MOV A 1
+STORE A [4]
+JMP BALL_Y
+
+BALL_RIGHT:
+MOV A [2]
+ADD A 1
+STORE A [2]
+CMP A 78
+JNZ BALL_Y
+// Check right paddle (ball must hit paddle at y == paddle, paddle+1, or paddle+2)
+MOV D [7]
+CMP B D
+JZ BOUNCE_XR
+ADD D 1
+CMP B D
+JZ BOUNCE_XR
+ADD D 1
+CMP B D
+JZ BOUNCE_XR
+// Missed paddle, left scores
+MOV D [0]
+ADD D 1
+STORE D [0]
+JMP RESET_BALL
+BOUNCE_XR:
+// Move ball to just outside paddle after bounce
+MOV A 77
+STORE A [2]
+MOV A 255
+STORE A [4]
+
+BALL_Y:
+// Ball vertical movement
+MOV A [5]
+CMP A 1
+JZ BALL_DOWN
+// Up
+MOV A [3]
+SUB A 1
+STORE A [3]
+CMP A 1
+JNZ END_BALL
+MOV A 1
+STORE A [5]
+JMP END_BALL
+
+BALL_DOWN:
+MOV A [3]
+ADD A 1
+STORE A [3]
+CMP A 23
+JNZ END_BALL
+MOV A 255
+STORE A [5]
+
+END_BALL:
+JMP GAME_LOOP
+
+RESET_BALL:
+MOV A 39
+STORE A [2]
+MOV A 12
+STORE A [3]
+// Reverse direction
+MOV A [4]
+CMP A 1
+JZ RB_LEFT
+MOV A 1
+STORE A [4]
+JMP RB_DY
+RB_LEFT:
+MOV A 255
+STORE A [4]
+RB_DY:
+RAND A
+MOD A 2
+JZ RB_DOWN
+MOV A 255
+STORE A [5]
+JMP GAME_LOOP
+RB_DOWN:
+MOV A 1
+STORE A [5]
+JMP GAME_LOOP

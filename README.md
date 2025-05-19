@@ -51,7 +51,7 @@ This is equivalent to using numeric indices, but is easier to read and maintain.
 
 ## Example Programs
 
-The files [`game.e8`](/examples/game.e8), [`example.e8`](/examples/example.e8), [`example2.e8`](/examples/example2.e8), [`example3.e8`](/examples/example3.e8), [`example4.e8`](/examples/example4.e8), [`example5.e8`](/examples/example5.e8), [`example6.e8`](/examples/example6.e8), [`example7.e8`](/examples/example7.e8), and others contain example programs that demonstrate the use of registers, arithmetic operations, memory storage, loops, and conditional logic.
+The files [`game.e8`](/examples/game.e8), [`game2.e8`](/examples/game2.e8), [`example.e8`](/examples/example.e8), [`example2.e8`](/examples/example2.e8), [`example3.e8`](/examples/example3.e8), [`example4.e8`](/examples/example4.e8), [`example5.e8`](/examples/example5.e8), [`example6.e8`](/examples/example6.e8), [`example7.e8`](/examples/example7.e8), and others contain example programs that demonstrate the use of registers, arithmetic operations, memory storage, loops, and conditional logic.
 
 **Even or Odd Example:**
 ```plaintext
