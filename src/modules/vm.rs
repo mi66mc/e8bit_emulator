@@ -2,7 +2,7 @@ use std::time::Duration;
 use std::io::{ stdout, Write };
 use crate::modules::utils::{ clear_terminal_screen, simple_rand };
 use crossterm::event::{ poll, read, Event, KeyEvent, KeyCode };
-// use crossterm::terminal::{ enable_raw_mode, disable_raw_mode };
+use crossterm::terminal::{ enable_raw_mode, disable_raw_mode };
 
 #[derive(Debug)]
 pub struct Vm {
@@ -91,7 +91,6 @@ impl Vm {
     }
 
     pub fn run(&mut self) {
-        // enable_raw_mode().unwrap();
         while self.pc < self.program.len() as u16 {
             let instruction = &self.program[self.pc as usize];
             match instruction {
@@ -125,7 +124,6 @@ impl Vm {
             }
             self.pc += 1;
         }
-        // disable_raw_mode().unwrap();
     }
 
     fn mov(&mut self, reg: Reg, src: Source) {
@@ -449,6 +447,7 @@ impl Vm {
     }
 
     fn inkey(&mut self, reg: Reg) {
+        enable_raw_mode().unwrap();
         use std::time::Duration;
         let mut value = 0u8;
         if poll(Duration::from_millis(0)).unwrap() {
@@ -468,6 +467,7 @@ impl Vm {
         }
         self.zf = value == 0;
         self.reg[self.reg_index(reg)] = value;
+        disable_raw_mode().unwrap();
     }
 
     fn draw(&mut self, x: Source, y: Source, src: Source) {
